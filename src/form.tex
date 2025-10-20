@@ -1,0 +1,44 @@
+\documentclass{standalone}
+\usepackage{tikz}
+\usepackage{tikz-uml}
+
+\begin{document}
+	
+	% ==========================
+	% USE CASE DIAGRAM (Corrected)
+	% ==========================
+	\begin{tikzpicture}
+		
+		% Actors
+		\umlactor[x=0, y=4]{User}
+		\umlactor[x=0, y=1]{Approver}
+		\umlactor[x=0, y=-2]{ExternalSystem}
+		
+		% System Boundary
+		\begin{umlsystem}[x=5, y=-1, fill=gray!10]{Form Automation System}
+			
+			\umlusecase[x=5, y=4, name=uc1]{Form Creation}
+			\umlusecase[x=5, y=2, name=uc2]{Form Submission \& Validation}
+			\umlusecase[x=5, y=0, name=uc3]{Review \& Approval}
+			\umlusecase[x=5, y=-2, name=uc4]{Database Update}
+			\umlusecase[x=9, y=3, name=uc5]{Document Verification}
+			\umlusecase[x=9, y=1, name=uc6]{Notifications \& Tracking}
+			\umlusecase[x=9, y=-1, name=uc7]{Analytics \& Optimization}
+			
+		\end{umlsystem}
+		
+		% Associations (actors to use cases)
+		\umlassoc{User}{uc1}
+		\umlassoc{User}{uc2}
+		\umlassoc{Approver}{uc3}
+		\umlassoc{ExternalSystem}{uc4}
+		
+		% Includes / Extends
+		\umlinclude{uc2}{uc5}
+		\umlinclude{uc3}{uc6}
+		\umlinclude{uc4}{uc6}
+		\umlextend{uc7}{uc6}
+		
+	\end{tikzpicture}
+	
+\end{document}
