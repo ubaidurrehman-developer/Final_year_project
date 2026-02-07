@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ShieldCheck, GraduationCap, Sun, Moon, Twitter, Linkedin, Facebook, Instagram, Mail, ArrowRight, Heart } from 'lucide-react';
+import LandingNavbar from '../components/LandingNavbar';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
@@ -9,6 +10,7 @@ const Layout = ({ children, role, setRole }) => {
 
     const noFooterRoutes = ['/admin', '/student', '/login', '/registration'];
     const hideFooter = noFooterRoutes.includes(location.pathname);
+    const isLandingPage = location.pathname === '/';
 
     return (
         <div className="min-h-screen flex flex-col font-sans text-[var(--page-text)] relative overflow-hidden bg-[var(--page-bg)] transition-colors duration-300 pb-24 md:pb-0">
@@ -19,7 +21,11 @@ const Layout = ({ children, role, setRole }) => {
                 <div className="absolute top-[40%] left-[40%] w-[400px] h-[400px] bg-blue-600 rounded-full blur-[100px] animate-blob animation-delay-4000" style={{ opacity: 'var(--blob-opacity)' }} />
             </div>
 
-            <Navbar role={role} setRole={setRole} />
+            {isLandingPage ? (
+                <LandingNavbar />
+            ) : (
+                <Navbar role={role} setRole={setRole} />
+            )}
 
             <main className="flex-grow relative z-10">
                 {children}

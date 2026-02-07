@@ -1,5 +1,6 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import Lenis from 'lenis';
 import ProtectedRoute from '../components/ProtectedRoute';
 import Layout from '../layouts/Layout';
 import Spinner from '../components/Spinner';
@@ -9,6 +10,31 @@ function App() {
   const [role, setRole] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const location = useLocation();
+
+  // Initialize Lenis for smooth scrolling
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      direction: 'vertical',
+      gestureDirection: 'vertical',
+      smooth: true,
+      mouseMultiplier: 1,
+      smoothTouch: false,
+      touchMultiplier: 2,
+    });
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+
+    return () => {
+      lenis.destroy();
+    };
+  }, []);
 
   // Show loading state briefly on route change to prevent flash
   useEffect(() => {
