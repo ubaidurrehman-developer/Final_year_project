@@ -39,6 +39,7 @@ class User(AbstractUser):
     age = models.IntegerField("Age", null=True, blank=True)
     password = models.CharField("Password", max_length=255, null=True, blank=True)
     email = models.EmailField("Email", unique=True, null=True, blank=True)
+    must_change_password = models.BooleanField(default=False)
     mobile = models.CharField(
         "Mobile",
         max_length=12,

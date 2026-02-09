@@ -1,36 +1,40 @@
 # serializers.py
-
-from django.contrib.auth.hashers import make_password
-from django.utils.crypto import get_random_string
+from django.db import IntegrityError
 from rest_framework import serializers
 from django.db.models import Max
 from django.db import transaction
-import random, string
 from .models import *
 
 
-def generate_password():
-    return "".join(random.choices(string.ascii_letters + string.digits, k=8))
+def generate_password(length=12):    
+    chars = string.ascii_letters + string.digits + "!@#$%^&*"
+    return "".join(random.SystemRandom().choices(chars, k=length))
 
 
-def generate_roll_no(campus: str, batch: str):
+def generate_roll_no(campus, batch):
     prefix = f"{batch[-2:]}{campus[0]}"
 
-    last_roll = Student.objects.filter(roll_no__startswith=prefix).aggregate(
-        max_roll=Max("roll_no")
-    )["max_roll"]
+    last_roll = Student.objects.filter(
+        roll_no__startswith=prefix
+    ).aggregate(max_roll=Max("roll_no"))["max_roll"]
 
-    if last_roll:
-        last_number = int(last_roll.split("-")[-1])
-        next_number = last_number + 1
-    else:
-        next_number = 9001
-
+    next_number = int(last_roll.split("-")[-1]) + 1 if last_roll else 9001
     return f"{prefix}-{next_number}"
 
 
+
+
 def generate_admin_username(full_name: str):
-    return ".".join(full_name.lower().split())
+    base = ".".join(full_name.lower().split())
+    username = base
+    counter = 1
+
+    while User.objects.filter(username=username).exists():
+        username = f"{base}{counter}"
+        counter += 1
+
+    return username
+
 
 
 class AddressSerializer(serializers.ModelSerializer):
@@ -49,8 +53,7 @@ class UserSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(write_only=True, required=False)
     last_name = serializers.CharField(write_only=True, required=False)
     student = StudentSerializer(required=False, write_only=True)
-    addresses = AddressSerializer(many=True, required=False, write_only=True)
-    role = serializers.CharField(write_only=True, required=False)
+    addresses = AddressSerializer(many=True, required=False, write_only=True)    
 
     class Meta:
         model = User
@@ -60,7 +63,6 @@ class UserSerializer(serializers.ModelSerializer):
             "email",
             "gender",
             "dob",
-            "age",
             "mobile",
             "cnic",
             "blood_group",
@@ -68,7 +70,7 @@ class UserSerializer(serializers.ModelSerializer):
             "password",
             "id",
             "student",
-            "addresses",
+            "addresses",            
             "role",
         ]
 
@@ -79,7 +81,7 @@ class UserSerializer(serializers.ModelSerializer):
         # Extract nested data
         student_data = validated_data.pop("student", None)
         addresses_data = validated_data.pop("addresses", None)
-        role = validated_data.pop("role", "admin")
+        role = self.context.get("role", "admin")
 
         # 1. Combine First/Last Name -> Full Name
         first = validated_data.pop("first_name", "").strip()
@@ -89,13 +91,7 @@ class UserSerializer(serializers.ModelSerializer):
 
         # 2. Decide Username based on role
         if role == "student" and student_data:
-            roll_no = generate_roll_no(
-                campus=student_data.get("campus"), 
-                batch=student_data.get("batch")
-            )
-            username = roll_no
-            # Update student data with generated roll_no
-            student_data["roll_no"] = roll_no
+            username = "__temp__"
         else:
             if not full_name:
                 raise serializers.ValidationError("Admin must have first and last name")
@@ -119,16 +115,38 @@ class UserSerializer(serializers.ModelSerializer):
             **validated_data
         )
 
+        user.must_change_password = True
+        user.save(update_fields=["must_change_password"])
+        
         # 5. Create Student if role is student
         if role == "student" and student_data:
             # Set default status if not provided
             if "status" not in student_data:
                 student_data["status"] = "Active"
             
-            Student.objects.create(
-                user=user,
-                **student_data
-            )
+            MAX_RETRIES = 5
+
+            for _ in range(MAX_RETRIES):
+                roll_no = generate_roll_no(
+                    campus=student_data.get("campus"),
+                    batch=student_data.get("batch"),
+                )
+                student_data["roll_no"] = roll_no
+
+                try:
+                    Student.objects.create(
+                        user=user,
+                        **student_data
+                    )
+                    user.username = roll_no
+                    user.save(update_fields=["username"])                    
+                    break
+                except IntegrityError:
+                    continue
+            else:
+                raise serializers.ValidationError(
+                    "Could not generate unique roll number. Try again."
+                )
 
         # 6. Create Addresses
         if addresses_data:

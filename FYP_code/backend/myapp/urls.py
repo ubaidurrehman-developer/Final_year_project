@@ -3,9 +3,11 @@ from .views import *
 
 urlpatterns = [
     path("", home),
+    path("upload/", upload),
     path("login/", LoginView.as_view()),
     path("me/", MeView.as_view()),
     path("users/", UserView.as_view()),
     path("users/<int:pk>/", UserView.as_view()),
-    path("auth/forgot-password/", ForgotPasswordView.as_view()),
+    path("detect/", run_detector),
+    path("auth/change-password/", ChangePasswordView.as_view()),
 ]
