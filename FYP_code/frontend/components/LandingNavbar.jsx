@@ -10,7 +10,7 @@ const LandingNavbar = () => {
     const { toggleTheme } = useTheme();
 
     useEffect(() => {
-        return scrollY.onChange((latest) => {
+        return scrollY.on('change', (latest) => {
             setIsScrolled(latest > 50);
         });
     }, [scrollY]);
@@ -71,12 +71,6 @@ const LandingNavbar = () => {
                         </button>
                         <Link
                             to="/login"
-                            className="hidden md:block text-sm font-medium text-gray-600 hover:text-primary-500 transition-colors dark:text-gray-300"
-                        >
-                            Log in
-                        </Link>
-                        <Link
-                            to="/registration"
                             className="px-5 py-2 rounded-full bg-primary-500 hover:bg-primary-600 text-white text-sm font-bold transition-all hover:scale-105 hover:shadow-lg hover:shadow-primary-500/25 flex items-center gap-2"
                         >
                             Get Started

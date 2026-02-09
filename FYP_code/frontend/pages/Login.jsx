@@ -1,12 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { User, Lock, ArrowLeft, GraduationCap, AlertCircle, Hexagon, Sparkles } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
-import { useAlert } from '../context/AlertContext';
+import { api, useAlert } from '../src/index';
 
-const Login = ({setRole}) => {
-    
+const Login = ({ setRole }) => {
+
     const { showAlert } = useAlert();
     const navigate = useNavigate();
     const [error, setError] = useState('');
@@ -23,8 +22,8 @@ const Login = ({setRole}) => {
         setLoading(true);
 
         try {
-            const response = await axios.post(
-                `${import.meta.env.VITE_API_BASE_URL}/login/`,
+            const response = await api.post(
+                `/login/`,
                 {
                     username: formData.username,
                     password: formData.password,
@@ -41,7 +40,7 @@ const Login = ({setRole}) => {
 
         } catch (err) {
             if (err.response?.status === 401) {
-                showAlert({ type: 'error', message: err.response.data.detail || "Invalid credentials" });                
+                showAlert({ type: 'error', message: err.response.data.detail || "Invalid credentials" });
             } else {
                 showAlert({ type: 'error', message: "Something went wrong!" });
             }

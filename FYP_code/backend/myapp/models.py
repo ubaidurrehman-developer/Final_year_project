@@ -35,8 +35,7 @@ class User(AbstractUser):
     gender = models.CharField(
         "Gender", max_length=1, choices=Gender.choices, null=True, blank=True
     )
-    dob = models.DateField("Date of Birth", null=True, blank=True)
-    age = models.IntegerField("Age", null=True, blank=True)
+    dob = models.DateField("Date of Birth", null=True, blank=True)    
     password = models.CharField("Password", max_length=255, null=True, blank=True)
     email = models.EmailField("Email", unique=True, null=True, blank=True)
     must_change_password = models.BooleanField(default=False)
@@ -97,7 +96,7 @@ class Student(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
     roll_no = models.CharField("User ID", max_length=8, unique=True)
-    status = models.CharField("Status", max_length=10, choices=Status.choices)
+    status = models.CharField("Status", max_length=10, choices=Status.choices, default=Status.ACTIVE)
     campus = models.CharField(
         "Campus", max_length=1, choices=Campus.choices, default=Campus.P
     )
@@ -122,7 +121,7 @@ class Address(models.Model):
     city = models.CharField(max_length=15)
     province = models.CharField(max_length=20)
     country = models.CharField(max_length=20)
-    postal_code = models.CharField(max_length=10)
+    postal_code = models.CharField(max_length=10, blank=True, null=True)
 
     class Meta:
         db_table = "address"

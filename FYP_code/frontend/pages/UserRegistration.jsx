@@ -3,6 +3,7 @@ import { getNames } from 'country-list';
 import { useAlert } from '../context/AlertContext';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../src/index';
 
 export default function Registration() {
     const navigate = useNavigate();
@@ -91,18 +92,6 @@ export default function Registration() {
         { value: "MS", label: "Master of Science" },
         { value: "PHD", label: "Doctor of Philosophy" }
     ];
-
-    const calculateAge = (dob) => {
-        if (!dob) return '';
-        const today = new Date();
-        const birthDate = new Date(dob);
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-        }
-        return age;
-    };
 
     const formatMobile = (value) => {
         const digits = value.replace(/\D/g, '');
@@ -219,6 +208,7 @@ export default function Registration() {
 
     const validateStep = (step) => {
         const newErrors = {};
+        const isAddressStep = (role === 'admin' && step === 2) || (role === 'student' && step === 3);
 
         if (step === 1) {
             // Basic Information validation
@@ -243,7 +233,7 @@ export default function Registration() {
             if (!studentData.program) newErrors.program = 'Program is required';
             if (!studentData.degree) newErrors.degree = 'Degree is required';
             if (!studentData.batch || studentData.batch.length !== 4) newErrors.batch = 'Valid Batch year is required (e.g., 2024)';
-        } else if ((step === 2 && role === 'admin') || (step === 3 && role === 'student')) {
+        } else if (isAddressStep) {
             // Address validation
             if (!addressData.permanent.address) newErrors.permanent_address = 'Permanent Address is required';
             if (!addressData.permanent.city) newErrors.permanent_city = 'Permanent City is required';
@@ -291,107 +281,100 @@ export default function Registration() {
         if (!validateStep(currentStep)) return;
 
         setLoading(true);
-        try {
-            const age = calculateAge(userData.dob);
-            const mobile = userData.mobile.replace(/\D/g, '').replace(/^(\d{4})(\d{0,7})$/, '$1-$2');
-            const cnic = userData.cnic.replace(/\D/g, '').replace(/^(\d{5})(\d{7})(\d{0,1})$/, '$1-$2-$3');
 
-            const payload = {
-                role: role,
-                ...userData,
-                mobile: mobile,
-                cnic: cnic,
-                age: age,
+        const mobile = userData.mobile.replace(/\D/g, '').replace(/^(\d{4})(\d{0,7})$/, '$1-$2');
+        const cnic = userData.cnic.replace(/\D/g, '').replace(/^(\d{5})(\d{7})(\d{0,1})$/, '$1-$2-$3');
+
+        const payload = {
+            ...userData,
+            mobile,
+            cnic,
+        };
+
+        // Remove retype_password as it's not needed in backend
+        delete payload.retype_password;
+
+        // Add student data if role is student
+        if (role === 'student') {
+            payload.student = {
+                campus: studentData.campus,
+                program: studentData.program,
+                degree: studentData.degree,
+                batch: studentData.batch,
             };
+        }
 
-            // Remove retype_password as it's not needed in backend
-            delete payload.retype_password;
+        // Add addresses
+        payload.addresses = [
+            {
+                address_type: 'Permanent',
+                ...addressData.permanent
+            },
+        ];
+        if (!sameAddress) {
+            payload.addresses.push({
+                address_type: 'Current',
+                ...addressData.current
+            });
+        }
 
-            // Add student data if role is student
-            if (role === 'student') {
-                payload.student = {
-                    campus: studentData.campus,
-                    program: studentData.program,
-                    degree: studentData.degree,
-                    batch: studentData.batch,
-                    status: studentData.status,
-                };
-            }
+        try {
+            const { data } = await api.post(
+                `/users/`,
+                payload
+            );
 
-            // Add addresses
-            payload.addresses = [
-                {
-                    address_type: 'Permanent',
-                    ...addressData.permanent
-                },
-                {
-                    address_type: 'Current',
-                    ...addressData.current
-                }
-            ];
+            showAlert(`${role === 'admin' ? 'Admin' : 'Student'} Registered Successfully!`, 'success');
+            showAlert(`Those are your login credentials(Remember them): Username: ${data.username}, Password: ${data.password}`, 'info', 10000);
 
-            const BASE_URL = import.meta.env.VITE_API_BASE_URL + '/users/';
-            const response = await fetch(`${BASE_URL}`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload)
+            // Reset all form data
+            setUserData({
+                first_name: '',
+                last_name: '',
+                gender: '',
+                dob: '',
+                email: '',
+                mobile: '',
+                cnic: '',
+                blood_group: '',
+                nationality: '',
+                password: '',
+                retype_password: '',
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                showAlert(`${role === 'admin' ? 'Admin' : 'Student'} Registered Successfully! Username: ${data.username}`, 'success');
+            setStudentData({
+                campus: 'P',
+                program: 'CS',
+                degree: 'BS',
+                batch: '20',
+            });
 
-                // Reset all form data
-                setUserData({
-                    first_name: '',
-                    last_name: '',
-                    gender: '',
-                    dob: '',
-                    email: '',
-                    mobile: '',
-                    cnic: '',
-                    blood_group: '',
-                    nationality: '',
-                    password: '',
-                    retype_password: '',
-                });
-                setStudentData({
-                    campus: 'P',
-                    program: 'CS',
-                    degree: 'BS',
-                    batch: '20',
-                    status: 'Active',
-                });
-                setAddressData({
-                    permanent: {
-                        address: '',
-                        city: '',
-                        province: '',
-                        country: '',
-                        postal_code: '',
-                    },
-                    current: {
-                        address: '',
-                        city: '',
-                        province: '',
-                        country: '',
-                        postal_code: '',
-                    },
-                });
-                setCurrentStep(1);
-                setSameAddress(false);
-            } else {
-                const data = await response.json();
-                console.log(data);
-                showAlert('Registration Failed: ' + (data.message || 'Unknown error'), 'error');
-            }
-        } catch (error) {
-            console.log(error);
-            showAlert('Registration Failed: ' + error.message, 'error');
-        } finally {
+            setAddressData({
+                permanent: {
+                    address: '',
+                    city: '',
+                    province: '',
+                    country: '',
+                    postal_code: '',
+                },
+                current: {
+                    address: '',
+                    city: '',
+                    province: '',
+                    country: '',
+                    postal_code: '',
+                },
+            });
+
+            setCurrentStep(1);
+            setSameAddress(false);            
+
+        } catch (err) {
+            console.log(err.response?.data);
+            showAlert(
+                err.response?.data?.message || 'Registration Failed',
+                'error'
+            );
             setLoading(false);
         }
     };

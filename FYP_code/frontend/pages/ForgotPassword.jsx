@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, Lock, ArrowLeft, GraduationCap, AlertCircle, Hexagon, Sparkles, Mail } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Lock, ArrowLeft, GraduationCap, AlertCircle, Hexagon, Sparkles, Mail } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const ForgotPassword = () => {
     const [formData, setFormData] = useState({

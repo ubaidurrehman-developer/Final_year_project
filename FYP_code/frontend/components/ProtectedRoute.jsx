@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import axios from 'axios';
-import Spinner from './Spinner';
+import { api, Spinner } from '../src/index';
 
 const ProtectedRoute = ({ children, allowedRoles, setRole, role }) => {
     const [loading, setLoading] = useState(true);
@@ -10,8 +9,7 @@ const ProtectedRoute = ({ children, allowedRoles, setRole, role }) => {
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-                const response = await axios.get(`${BASE_URL}/me/`, { withCredentials: true });
+                const response = await api.get('/me/');
                 const fetchedRole = response.data.role;
 
                 // Set local state for immediate authorization check

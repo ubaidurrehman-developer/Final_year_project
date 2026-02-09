@@ -12,7 +12,7 @@ const Home = () => {
                 {/* Background Glows for "Clean" look */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary-100/50 rounded-full blur-[120px] -z-10" />
 
-                <div className="relative z-10 max-w-5xl mx-auto px-6 md:px-12 text-center">
+                <div className="relative mt-15 z-10 max-w-5xl mx-auto px-6 md:px-12 text-center">
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -27,7 +27,7 @@ const Home = () => {
                         </div>
 
                         {/* Heading */}
-                        <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight font-extrabold text-[#0a0a0a] mb-8 leading-[1.1]">
+                        <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-7.5xl tracking-tight font-extrabold text-[#0a0a0a] mb-8 leading-[1.1]">
                             Automate Forms with <br className="hidden sm:block" />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0ea5e9] to-[#22d3d3]">
                                 Intelligent Agents
@@ -35,7 +35,7 @@ const Home = () => {
                         </h1>
 
                         {/* Subtext */}
-                        <p className="mt-8 max-w-3xl mx-auto text-xl sm:text-2xl text-gray-500 mb-12 leading-relaxed font-medium">
+                        <p className="mt-8 max-w-3xl mx-auto text-xl sm:text-lg text-gray-500 mb-12 leading-relaxed font-medium">
                             Streamline your academic workflow. Submit, track, and manage requests effortlessly with our AI-powered multi-agent automation system.
                         </p>
                     </motion.div>

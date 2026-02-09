@@ -1,15 +1,13 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { ShieldCheck, GraduationCap, Sun, Moon, Twitter, Linkedin, Facebook, Instagram, Mail, ArrowRight, Heart } from 'lucide-react';
-import LandingNavbar from '../components/LandingNavbar';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import { useLocation } from 'react-router-dom';
+import { LandingNavbar, Navbar, Footer } from '../src/index';
 
 const Layout = ({ children, role, setRole }) => {
     const location = useLocation();
 
-    const noFooterRoutes = ['/admin', '/student', '/login', '/registration'];
+    const noNavbar = ['/login', '/registration', '/forgot-password'];
+    const noFooterRoutes = ['/admin', '/student', '/login', '/registration', '/forgot-password'];
     const hideFooter = noFooterRoutes.includes(location.pathname);
+    const hideNavbar = noNavbar.includes(location.pathname);
     const isLandingPage = location.pathname === '/';
 
     return (
@@ -24,7 +22,7 @@ const Layout = ({ children, role, setRole }) => {
             {isLandingPage ? (
                 <LandingNavbar />
             ) : (
-                <Navbar role={role} setRole={setRole} />
+                hideNavbar ? null : <Navbar role={role} setRole={setRole} />
             )}
 
             <main className="flex-grow relative z-10">

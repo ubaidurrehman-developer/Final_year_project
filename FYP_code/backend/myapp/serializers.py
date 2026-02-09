@@ -1,10 +1,11 @@
 # serializers.py
+from django.contrib.auth.models import Group
 from django.db import IntegrityError
 from rest_framework import serializers
 from django.db.models import Max
 from django.db import transaction
 from .models import *
-
+import random,string,uuid
 
 def generate_password(length=12):    
     chars = string.ascii_letters + string.digits + "!@#$%^&*"
@@ -53,11 +54,12 @@ class UserSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(write_only=True, required=False)
     last_name = serializers.CharField(write_only=True, required=False)
     student = StudentSerializer(required=False, write_only=True)
-    addresses = AddressSerializer(many=True, required=False, write_only=True)    
+    addresses = AddressSerializer(many=True, required=False, write_only=True)        
 
     class Meta:
         model = User
         fields = [
+            "full_name",
             "first_name",
             "last_name",
             "email",
@@ -70,18 +72,16 @@ class UserSerializer(serializers.ModelSerializer):
             "password",
             "id",
             "student",
-            "addresses",            
-            "role",
+            "addresses",                     
         ]
-
+    
     @transaction.atomic
     def create(self, validated_data):
         request = self.context["request"]
 
         # Extract nested data
         student_data = validated_data.pop("student", None)
-        addresses_data = validated_data.pop("addresses", None)
-        role = self.context.get("role", "admin")
+        addresses_data = validated_data.pop("addresses", None)        
 
         # 1. Combine First/Last Name -> Full Name
         first = validated_data.pop("first_name", "").strip()
@@ -89,9 +89,12 @@ class UserSerializer(serializers.ModelSerializer):
         full_name = f"{first} {last}".strip()
         validated_data["full_name"] = full_name
 
-        # 2. Decide Username based on role
-        if role == "student" and student_data:
-            username = "__temp__"
+        if isinstance(student_data, dict) and not student_data:
+            student_data = None
+        
+        # 2. Decide Username
+        if student_data:
+            username = f"temp_{uuid.uuid4().hex[:10]}"
         else:
             if not full_name:
                 raise serializers.ValidationError("Admin must have first and last name")
@@ -102,24 +105,31 @@ class UserSerializer(serializers.ModelSerializer):
 
         # 3. Handle Password
         password = validated_data.pop("password", None)
-        if not password:
-            password = generate_password()
+        if password is None:
+            password = generate_password()                        
 
         # 4. Create User
         created_by = request.user if request.user.is_authenticated else None
 
-        user = User.objects.create_user(
+        user = User.objects.create_user(            
+            first_name=first,
+            last_name=last,
             username=username, 
-            password=password, 
-            created_by=created_by, 
+            password=password,             
+            created_by=created_by,            
             **validated_data
         )
 
         user.must_change_password = True
         user.save(update_fields=["must_change_password"])
+
+        if not student_data:
+            group, _ = Group.objects.get_or_create(name="ADMIN")
+            user.groups.add(group)
+
         
-        # 5. Create Student if role is student
-        if role == "student" and student_data:
+        # 5. Create Student
+        if student_data:
             # Set default status if not provided
             if "status" not in student_data:
                 student_data["status"] = "Active"
@@ -139,7 +149,9 @@ class UserSerializer(serializers.ModelSerializer):
                         **student_data
                     )
                     user.username = roll_no
-                    user.save(update_fields=["username"])                    
+                    user.save(update_fields=["username"])  
+                    group, _ = Group.objects.get_or_create(name="STUDENT")
+                    user.groups.add(group)
                     break
                 except IntegrityError:
                     continue

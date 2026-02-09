@@ -116,6 +116,15 @@ class ChangePasswordView(APIView):
         return Response({"message": "Password reset successful"})
 
 
+class LogoutView(APIView):
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        response = Response({"message": "User logged out successfully"})
+        response.delete_cookie("auth_token")
+        return response
+
 class LoginView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -174,68 +183,44 @@ class UserView(APIView):
     permission_classes = [IsAdmin]
 
     def post(self, request):
-        # 1. Strict Permission Check
-        if not IsAdmin:
-            return Response(
-                {"message": "You do not have permission to create users."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-        role = "student" if "student" in request.data else "admin"
-
-        # 2. Create User
-        serializer = UserSerializer(data=request.data, context={"request": request, "role": role})
+        serializer = UserSerializer(
+            data=request.data,
+            context={"request": request}
+        )
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+        print(request.data["password"])
 
-        # 3. Response (No auto-login for new user)
         return Response(
             {"message": "User created successfully", "username": user.username},
             status=status.HTTP_201_CREATED,
         )
 
     def get(self, request):
-        if not IsAdmin:
-            return Response(
-                {"message": "You do not have permission to view users."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
         users = User.objects.all()
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
 
     def put(self, request, pk):
-        if not IsAdmin:
-            return Response(
-                {"message": "You do not have permission to update users."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
         user = get_object_or_404(User, pk=pk)
         serializer = UserSerializer(
-            user, data=request.data, partial=True, context={"request": request}
+            user,
+            data=request.data,
+            partial=True,
+            context={"request": request},
         )
-        if serializer.is_valid():
-            serializer.save()
-            return Response(
-                {
-                    "data": serializer.data,
-                    "message": "User updated successfully",
-                },
-                status=200,
-            )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
         return Response(
-            {"errors": serializer.errors, "message": "User update failed"},
-            status=status.HTTP_400_BAD_REQUEST,
+            {"message": "User updated successfully", "data": serializer.data},
+            status=status.HTTP_200_OK,
         )
 
     def delete(self, request, pk):
-        if not IsAdmin:
-            return Response(
-                {"message": "You do not have permission to delete users."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
         user = get_object_or_404(User, pk=pk)
         user.delete()
         return Response(
-            {"message": "User deleted successfully"}, status=status.HTTP_200_OK
+            {"message": "User deleted successfully"},
+            status=status.HTTP_200_OK,
         )

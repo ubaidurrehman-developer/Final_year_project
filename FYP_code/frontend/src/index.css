@@ -46,6 +46,9 @@
             transform: translate(0px, 0px) scale(1);
         }
     }
+
+    --text-7-5xl: 5.25rem;
+    --text-7-5xl--line-height: 1;
 }
 
 :root {

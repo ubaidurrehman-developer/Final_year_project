@@ -1,51 +1,48 @@
-import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Home, GraduationCap, ShieldCheck, LogIn, LogOut, Settings, Palette } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Home, GraduationCap, ShieldCheck, LogIn, LogOut, User } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { api } from '../src/index';
 
 const Navbar = ({ role, setRole }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const { toggleTheme, theme } = useTheme(); // Assuming these exist in context
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        try {
+            await api.post(
+                `/logout/`,
+                {},
+                {
+                    withCredentials: true,
+                }
+            );
+        } catch (error) {
+            console.log(error);
+        }
+
         setRole(null);
-        navigate("/login");
+        navigate("/");
     };
 
-    // Define navigation items with their respective icons and roles replacement
-    // Mapping existing routes to icons requested or suitable equivalents
     const navItems = [
         { name: 'Home', path: '/', icon: Home, roles: ['admin', 'student'] },
         { name: 'Student', path: '/student', icon: GraduationCap, roles: ['student'] },
         { name: 'Admin', path: '/admin', icon: ShieldCheck, roles: ['admin'] },
-        // Added purely visual items if they were to exist, but currently only showing functional ones
-        // { name: 'Messages', path: '/messages', icon: MessageSquare, roles: ['admin', 'student'] },
+        { name: 'Registration', path: '/registration', icon: User, roles: ['admin', 'student'] },
     ];
 
     const visibleItems = role ? navItems.filter((item) => item.roles.includes(role)) : [];
 
     return (
         <div className="fixed top-4 left-4 z-50 h-[calc(100vh-2rem)] hidden md:flex flex-col justify-center">
-            {/* 
-                Navbar Container 
-                - Pill shape
-                - White background with shadow
-                - Fixed position
-            */}
             <motion.nav
                 initial={{ x: -100, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 100, damping: 20 }}
                 className="bg-white/90 backdrop-blur-md border border-gray-100 rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.05)] py-6 flex flex-col items-center gap-2 h-auto max-h-full overflow-y-auto w-20 no-scrollbar dark:bg-[#171717]/90 dark:border-white/10"
             >
-                {/* Logo / Brand or Top Item */}
-                <div className="mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-primary-400/10 flex items-center justify-center text-primary-400">
-                        <div className="w-4 h-4 rounded-full bg-current" />
-                    </div>
-                </div>
 
                 {/* Navigation Links */}
                 <ul className="flex flex-col gap-3 w-full px-3">
@@ -86,34 +83,6 @@ const Navbar = ({ role, setRole }) => {
                         );
                     })}
 
-                    {/* Divider */}
-                    <div className="w-full h-px bg-gray-100 dark:bg-white/10 my-2" />
-
-                    {/* Theme Toggle (Optional but fits 'Settings') */}
-                    <li className="relative group">
-                        <button
-                            onClick={toggleTheme}
-                            className="
-                                relative flex items-center justify-center w-14 h-14 rounded-2xl transition-all duration-300
-                                text-gray-400 hover:text-white hover:bg-primary-400 dark:text-gray-500
-                            "
-                        >
-                            <Palette size={24} strokeWidth={2} />
-                            <span
-                                className="
-                                    absolute left-[85%] top-1/2 -translate-y-1/2 ml-3
-                                    px-3 py-1.5 rounded-xl
-                                    bg-white dark:bg-[#262626] border border-gray-100 dark:border-white/10
-                                    shadow-lg
-                                    text-primary-600 dark:text-primary-400 font-semibold text-sm whitespace-nowrap
-                                    opacity-0 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-4
-                                    pointer-events-none transition-all duration-300 ease-out z-20
-                                "
-                            >
-                                Theme
-                            </span>
-                        </button>
-                    </li>
                 </ul>
 
                 {/* Bottom Actions (Login/Logout) */}
@@ -176,9 +145,6 @@ const Navbar = ({ role, setRole }) => {
                         </Link>
                     )
                 })}
-                <button onClick={toggleTheme} className="text-gray-400">
-                    <Palette size={24} />
-                </button>
             </div>
         </div>
     );
