@@ -1,12 +1,11 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { ProtectedRoute, Spinner, Layout, Home, Login, Admin, Student, UserRegistration, ForgotPassword } from './index';
+import { ProtectedRoute, Spinner, Layout, Home, Login, Admin, Student, UserRegistration, ForgotPassword, ReactFlow } from './index';
 import Lenis from 'lenis';
+
 
 function App() {
   const [role, setRole] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const location = useLocation();
 
   // Initialize Lenis for smooth scrolling
   useEffect(() => {
@@ -33,17 +32,6 @@ function App() {
     };
   }, []);
 
-  // Show loading state briefly on route change to prevent flash
-  useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => setIsLoading(false), 150);
-    return () => clearTimeout(timer);
-  }, [location.pathname]);
-
-  if (isLoading && (location.pathname === '/admin' || location.pathname === '/student')) {
-    return <Spinner />;
-  }
-
   return (
     <div className="App">
       <Layout role={role} setRole={setRole}>
@@ -68,6 +56,7 @@ function App() {
           />
           <Route path='/registration' element={<UserRegistration />} />
           <Route path='/forgot-password' element={<ForgotPassword />} />
+          <Route path='/reactflow' element={<ReactFlow />} />
         </Routes>
       </Layout>
     </div>

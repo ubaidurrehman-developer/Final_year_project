@@ -4,8 +4,8 @@ import { LandingNavbar, Navbar, Footer } from '../src/index';
 const Layout = ({ children, role, setRole }) => {
     const location = useLocation();
 
-    const noNavbar = ['/login', '/registration', '/forgot-password'];
-    const noFooterRoutes = ['/admin', '/student', '/login', '/registration', '/forgot-password'];
+    const noNavbar = ['/login', '/registration', '/forgot-password', '/reactflow'];
+    const noFooterRoutes = ['/admin', '/student', '/login', '/registration', '/forgot-password', '/reactflow'];
     const hideFooter = noFooterRoutes.includes(location.pathname);
     const hideNavbar = noNavbar.includes(location.pathname);
     const isLandingPage = location.pathname === '/';

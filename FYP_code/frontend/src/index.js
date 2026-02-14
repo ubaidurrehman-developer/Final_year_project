@@ -20,6 +20,8 @@ export { default as Home } from '../pages/Home';
 export { default as Login } from '../pages/Login';
 export { default as Student } from '../pages/Student';
 export { default as UserRegistration } from '../pages/UserRegistration';
+export { default as ReactFlow } from '../pages/ReactFlow';
+export { default as CustomNode } from '../src/nodes/CustomNode';
 
 // API
 export { default as api } from './api/axios';
