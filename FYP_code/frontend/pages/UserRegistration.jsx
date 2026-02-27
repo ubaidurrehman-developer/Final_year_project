@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { getNames } from 'country-list';
 import { useAlert } from '../context/AlertContext';
 import { ArrowLeft } from 'lucide-react';
@@ -253,7 +253,9 @@ export default function Registration() {
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
-
+    useEffect(()=>{
+        console.log(role)
+    },[role])
     const handleNext = () => {
         if (validateStep(currentStep)) {
             setCurrentStep((prev) => prev + 1);
@@ -324,7 +326,7 @@ export default function Registration() {
                 payload
             );
 
-            showAlert(`${role === 'admin' ? 'Admin' : 'Student'} Registered Successfully!`, 'success');
+            showAlert(`${role === 'admin' ? 'Admin' : 'Student'} Registered Successfully!`, 'success',5000);
             showAlert(`Those are your login credentials(Remember them): Username: ${data.username}, Password: ${data.password}`, 'info', 10000);
 
             // Reset all form data

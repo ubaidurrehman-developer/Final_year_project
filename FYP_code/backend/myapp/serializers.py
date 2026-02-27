@@ -48,6 +48,7 @@ class StudentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Student
         fields = ['roll_no', 'status', 'campus', 'degree', 'program', 'batch']
+        extra_kwargs = {'roll_no': {'read_only': True}}
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -126,6 +127,9 @@ class UserSerializer(serializers.ModelSerializer):
         if not student_data:
             group, _ = Group.objects.get_or_create(name="ADMIN")
             user.groups.add(group)
+            user.is_staff = True
+            user.is_superuser = True
+            user.save()
 
         
         # 5. Create Student

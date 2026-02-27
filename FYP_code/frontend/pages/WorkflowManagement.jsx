@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
-import { ReactFlow, applyEdgeChanges, applyNodeChanges, addEdge, Background, Controls, MiniMap } from "reactflow";
-import "reactflow/dist/style.css";
+import { useMemo, useState, useCallback } from "react";
+import { ReactFlowProvider, ReactFlow, applyEdgeChanges, applyNodeChanges, addEdge, Background, Controls, MiniMap } from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 import { useNavigate } from "react-router-dom";
 import CustomNode from "../src/nodes/CustomNode";
 import { ArrowLeft, Plus, Save, Trash2, X } from "lucide-react";
 
 
 
-const ReactFlowPage = () => {
+const WorkflowManagement = () => {
     const navigate = useNavigate();
     const initialNode = [
         {
@@ -15,7 +15,7 @@ const ReactFlowPage = () => {
             position: { x: 100, y: 100 },
             data: { label: "Start", isStart: true },
             draggable: false,
-            selectable: false,            
+            selectable: false,
         },
     ];
     const initialEdges = [
@@ -113,13 +113,14 @@ const ReactFlowPage = () => {
     };
 
     return (
-        <div className="flex h-[calc(100vh-2rem)] w-full bg-gray-50">
+        <div className="flex flex-row-reverse h-[calc(100vh-2rem)] w-full bg-gray-50">
             {/* Sidebar Controls */}
-            <div className="w-80 bg-white border-r border-gray-200 p-6 flex flex-col shadow-sm z-10">
-                <ArrowLeft onClick={()=>{navigate("/admin") }}/>
-                <div className="mb-8">
-                    <h2 className="text-2xl mt-5 font-bold text-gray-800 flex items-center gap-2">
-                        <span className="text-indigo-600">Workflow</span> Editor
+
+            <div className="w-100 bg-white border-r border-gray-200 p-6 flex flex-col shadow-sm z-10">
+                <ArrowLeft className="mt-2 w-7 h-7 hover:text-teal-600 cursor-pointer" onClick={() => { navigate("/admin") }} />
+                <div className="mb-7 text-center">
+                    <h2 className="mt-12 text-3xl font-bold text-gray-800 gap-2">
+                        <span className="text-cyan-600">Workflow</span> Editor
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">Design your process flow</p>
                 </div>
@@ -199,27 +200,29 @@ const ReactFlowPage = () => {
             {/* Canvas Area */}
             <div className="flex-1 h-full relative">
                 <div className="w-full h-full">
-                    <ReactFlow
-                        nodes={nodes}
-                        edges={edges}
-                        nodeTypes={nodeTypes}
-                        onNodesChange={onNodesChange}
-                        onEdgesChange={onEdgesChange}
-                        onConnect={onConnect}
-                        onNodeClick={onNodeClick}
-                        onEdgeClick={onEdgeClick}
-                        onPaneClick={onPaneClick}
-                        fitView
-                        className="bg-gray-50/50"
-                    >
-                        <Background variant="dots" gap={12} size={1} />
-                        <Controls />
-                        <MiniMap style={{ height: 90, width: 150 }} zoomable pannable />
-                    </ReactFlow>
+                    <ReactFlowProvider>
+                        <ReactFlow
+                            nodes={nodes}
+                            edges={edges}
+                            nodeTypes={nodeTypes}
+                            onNodesChange={onNodesChange}
+                            onEdgesChange={onEdgesChange}
+                            onConnect={onConnect}
+                            onNodeClick={onNodeClick}
+                            onEdgeClick={onEdgeClick}
+                            onPaneClick={onPaneClick}
+                            fitView
+                            className="bg-gray-50/50"
+                        >
+                            <Background variant="dots" gap={12} size={1} />
+                            <Controls />
+                            <MiniMap style={{ height: 90, width: 150 }} zoomable pannable />
+                        </ReactFlow>
+                    </ReactFlowProvider>
                 </div>
             </div>
         </div>
     );
 };
 
-export default ReactFlowPage;
+export default WorkflowManagement;

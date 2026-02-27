@@ -1,23 +1,33 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, ArrowLeft, GraduationCap, AlertCircle, Hexagon, Sparkles, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../src/index';
 
 const ForgotPassword = () => {
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [error, setError] = useState('');
+    const navigate = useNavigate();
+
     const [formData, setFormData] = useState({
         newpassword: '',
         oldpassword: '',
         confirmpassword: '',
     });
-    const [verify, setVerify] = useState(false);
-    const [error, setError] = useState('');
-    const navigate = useNavigate();
+
+    useEffect(() => {
+        const token = document.cookie.includes("access")
+        if (!token) return;
+        setIsLoggedIn(true);
+    }, [])
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
 
         // send OTP Email
+
     };
 
     const handleChange = (e) =>
@@ -46,7 +56,7 @@ const ForgotPassword = () => {
                 <div className="relative hidden lg:flex flex-col justify-center items-center p-12 overflow-hidden bg-gradient-to-br from-[#0f172a] to-[#1e293b]">
                     <ArrowLeft
                         className="absolute top-8 left-8 h-6 w-6 text-white/70 cursor-pointer hover:text-white transition"
-                        onClick={() => navigate('/')}
+                        onClick={() => navigate('/login')}
                     />
 
                     <div className="flex flex-col items-center text-center">
@@ -102,7 +112,7 @@ const ForgotPassword = () => {
                     <div className="w-full max-w-sm border border-gray-300 text-gray-900 bg-white/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.05)] rounded-[2rem] p-8 relative z-10">
                         <div className="mb-8 text-center">
                             <h3 className="text-2xl font-bold text-gray-900 mb-2">Forgotten Password?</h3>
-                            <p className="text-gray-500 text-sm">{verify ? "Please enter your details to reset your password." : "Please enter your email address and we'll send you a verification code to reset your password."}</p>
+                            <p className="text-gray-500 text-sm">{isLoggedIn ? "Please enter your details to reset your password." : "Please enter your email address and we'll send you a verification code to reset your password."}</p>
                         </div>
 
                         {/* Error Message */}
@@ -117,20 +127,20 @@ const ForgotPassword = () => {
                         <form onSubmit={handleSubmit} className="space-y-5">
                             <div className="space-y-1.5">
                                 <div className="relative group">
-                                        {verify ? <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-teal-600 transition-colors" /> : <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-teal-600 transition-colors" />}
+                                    {isLoggedIn ? <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-teal-600 transition-colors" /> : <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-teal-600 transition-colors" />}
                                     <input
-                                        type={verify ? "password" : "email"}
-                                        name={verify ? "oldPassword" : "email"}
-                                        value={verify ? formData.oldpassword : formData.email}
+                                        type={isLoggedIn ? "password" : "email"}
+                                        name={isLoggedIn ? "oldPassword" : "email"}
+                                        value={isLoggedIn ? formData.oldpassword : formData.email}
                                         onChange={handleChange}
-                                        placeholder={verify ? "Old Password" : "Email"}
+                                        placeholder={isLoggedIn ? "Old Password" : "Email"}
                                         className="w-full bg-white/70 border border-gray-300 text-gray-800 rounded-full px-11 py-3 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 transition-all placeholder:text-gray-400 text-sm"
                                         required
                                     />
                                 </div>
                             </div>
 
-                            {verify ? (
+                            {isLoggedIn ? (
                                 <>
                                     <div className="space-y-1.5">
                                         <div className="relative group">

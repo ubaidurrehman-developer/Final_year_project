@@ -12,6 +12,7 @@ from rest_framework import status
 from .serializers import *
 from .models import *
 
+
 from django.views.decorators.csrf import csrf_exempt
 from PIL import Image
 from .detector import *
@@ -19,9 +20,6 @@ from .detector import *
 
 def home(request):
     return render(request, "home.html")
-
-def upload(request):
-    return render(request, "upload.html")
 
 
 class IsAdmin(BasePermission):
@@ -40,81 +38,109 @@ class CookieJWTAuthentication(JWTAuthentication):
         validated_token = self.get_validated_token(raw_token)
         return self.get_user(validated_token), validated_token
 
-@api_view(["POST"])
-@permission_classes([AllowAny]) # [IsAuthenticated] for production
-@csrf_exempt                    # remove in production
-def run_detector(request):
-    uploadedfile = request.FILES.get("file")
-    if not uploadedfile:
-        return Response(
-            {"message": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST
-        )
 
-    try:
-        image = Image.open(uploadedfile)
-        input_data, scale, pad_x, pad_y = preprocess(image)
-
-        outputs = session.run(None, {session.get_inputs()[0].name: input_data})
-        print(f"[DEBUG] Model output shape: {outputs[0].shape}")
-
-        detections = format_detections(outputs, image.size, scale, pad_x, pad_y)
-        print(f"[DEBUG] Number of detections: {len(detections)}")
-
-        detections = pixel_tighten_detections(image, detections, y_thresh=20) # tighting box and sorting from top-bottom
-        annotated_img, crop_paths = visualize_and_Crop(
-            image.copy(), detections, save_dir="media/crops"
-        )
-        annotated_path = "media/annotated.jpg"
-        annotated_img.save(annotated_path)
-
-        return Response(
-            {
-                "status": "success",
-                "total_count": len(detections),
-            }
-        )
-    except Exception as e:
-        return Response(
-            {"status": "error", "error": str(e)},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
-
-
-
-class ChangePasswordView(APIView):
-    authentication_classes = [CookieJWTAuthentication]
+class DetectionView(APIView):
     permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+    
     def post(self, request):
-        oldpassword = request.data["oldpassword"]
-        newpassword = request.data["newpassword"]
-        confirmpassword = request.data["confirmpassword"]
-
-        if not request.user.check_password(oldpassword):
+        uploadedfile = request.FILES.get("file")
+        if not uploadedfile:
             return Response(
-                {"message": "Old password is incorrect"},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"message": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+        try:
+            image = Image.open(uploadedfile)
+            input_data, scale, pad_x, pad_y = preprocess(image)
+
+            outputs = session.run(None, {session.get_inputs()[0].name: input_data})
+            print(f"[DEBUG] Model output shape: {outputs[0].shape}")
+
+            detections = format_detections(outputs, image.size, scale, pad_x, pad_y)
+            print(f"[DEBUG] Number of detections: {len(detections)}")
+
+            detections = pixel_tighten_detections(image, detections, y_thresh=20) # tighting box and sorting from top-bottom
+            annotated_img, crop_paths = visualize_and_Crop(
+                image.copy(), detections, save_dir="media/crops"
+            )
+            annotated_path = "media/annotated.jpg"
+            annotated_img.save(annotated_path)
+
+            return Response(
+                {
+                    "status": "success",
+                    "total_count": len(detections),
+                }
+            )
+        except Exception as e:
+            return Response(
+                {"status": "error", "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        if oldpassword == newpassword:
+
+class BasePasswordView(APIView):
+
+    def validate_and_set_password(self, user, oldpassword, newpassword, confirmpassword, check_old_password):
+
+        if check_old_password:
+            if not user.check_password(oldpassword):
+                return Response(
+                    {"message": "Old password is incorrect"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        if oldpassword and oldpassword == newpassword:
             return Response(
                 {"message": "Old password and new password cannot be same"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        if not newpassword or not confirmpassword:
+            return Response({"message": "All fields are required"}, status=400)
+            
         if newpassword != confirmpassword:
             return Response(
                 {"message": "New password and confirm password do not match"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        user = User.objects.get(username=request.user.username)
-        user.set_password(newpassword)
+        user.set_password(newpassword)        
+        user.must_change_password = False
         user.save()
-        request.user.must_change_password = False
-        request.user.save(update_fields=["must_change_password"])
 
-        return Response({"message": "Password reset successful"})
+        return Response({"message": "Password updated successfully"}, status=status.HTTP_200_OK)
 
+class ResetPasswordView(BasePasswordView):
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated]  # User must be logged in
+
+    def post(self, request):                
+        return self.validate_and_set_password(
+            user=request.user,
+            oldpassword=request.data.get("oldPassword"),
+            newpassword=request.data.get("newPassword"),
+            confirmpassword=request.data.get("confirmPassword"),            
+            check_old_password=True
+        )
+
+class ForgotPasswordView(BasePasswordView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+
+        # Sending OTP message on the mail
+
+        user = get_object_or_404(User, email=email)
+        return self.validate_and_set_password(
+            user=user,            
+            newpassword=request.data.get("newPassword"),
+            confirmpassword=request.data.get("confirmPassword"),                  
+            check_old_password=False
+        )
+        
 
 class LogoutView(APIView):
     authentication_classes = [CookieJWTAuthentication]
@@ -135,27 +161,19 @@ class LoginView(TokenObtainPairView):
 
         user = serializer.user
 
-        if user.must_change_password:
-            return Response(
-                {
-                    "message": "Password change required",
-                    "force_password_change": True,
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-        role = "admin" if user.is_superuser else "student"
-
+        role = "admin" if user.is_superuser else "student"        
         access = serializer.validated_data["access"]
         refresh = serializer.validated_data["refresh"]
 
+        force_password_change = user.must_change_password
         response = Response(
-            {
-                "access": access,
-                "refresh": refresh,
-                "role": role,
-                "message": "User logged in successfully",
-            }
+                {
+                    "access": access,
+                    "refresh": refresh,
+                    "role": role,
+                    "force_password_change": force_password_change,
+                    "message": "User logged in successfully",
+                }
         )
 
         response.set_cookie(

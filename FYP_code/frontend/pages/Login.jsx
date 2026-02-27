@@ -31,12 +31,21 @@ const Login = ({ setRole }) => {
                 { withCredentials: true }
             );
 
-            const { role } = response.data;
+            const { role, force_password_change } = response.data;
             setRole(role);
 
+            
             if (role === 'admin') navigate('/admin');
             else if (role === 'student') navigate('/student');
             else setError("You do not have access");
+
+            if (force_password_change) {
+                showAlert('You must change your password before continuing.', 'warning', 5000);
+                navigate(`/${role}/change-password`);
+                return;
+            }
+
+            showAlert("Login successful", "success", 2000);
 
         } catch (err) {
             if (err.response?.status === 401) {
@@ -172,7 +181,7 @@ const Login = ({ setRole }) => {
                                     />
                                 </div>
                                 <div className="flex justify-end pr-2">
-                                    <Link to={'/forgot-password'} className="text-xs font-medium text-teal-600 hover:text-teal-700 transition-colors">Forgot?</Link>
+                                    <Link to={`/forgot-password`} className="text-xs font-medium text-teal-600 hover:text-teal-700 transition-colors">Forgot?</Link>
                                 </div>
                             </div>
 

@@ -1,6 +1,17 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { ProtectedRoute, Spinner, Layout, Home, Login, Admin, Student, UserRegistration, ForgotPassword, ReactFlow } from './index';
+import {
+  ProtectedRoute,
+  Layout,
+  Home,
+  Login,
+  Admin,
+  Student,
+  UserRegistration,
+  ForgotPassword,
+  Detection,
+  WorkflowManagement,
+} from './index';
 import Lenis from 'lenis';
 
 
@@ -54,9 +65,10 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path='/registration' element={<UserRegistration />} />
-          <Route path='/forgot-password' element={<ForgotPassword />} />
-          <Route path='/reactflow' element={<ReactFlow />} />
+          <Route path='/admin/registration' element={<UserRegistration />} />
+          <Route path={`/forgot-password`} element={<ForgotPassword />} />
+          <Route path='/detection' element={<Detection />} />
+          <Route path={'/admin/workflow'} element={<WorkflowManagement />} />
         </Routes>
       </Layout>
     </div>

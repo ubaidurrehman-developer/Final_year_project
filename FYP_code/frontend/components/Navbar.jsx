@@ -1,16 +1,20 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+
 import {
-    Home,
     ArrowLeft,
     ArrowRight,
     GraduationCap,
     ShieldCheck,
     LogIn,
     LogOut,
-    User
+    UserPlus,
+    CircleUser,
+    Workflow,
+    ScanLine
 } from 'lucide-react';
+
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../src/index';
 
@@ -33,10 +37,12 @@ const Navbar = ({ role, setRole }) => {
     };
 
     const navItems = [
-        { name: 'Home', path: '/', icon: Home, roles: ['admin', 'student'] },
+        { name: 'Profile', path: '/profile', icon: CircleUser, roles: ['admin', 'student'] },
         { name: 'Student', path: '/student', icon: GraduationCap, roles: ['student'] },
         { name: 'Admin', path: '/admin', icon: ShieldCheck, roles: ['admin'] },
-        { name: 'Registration', path: '/registration', icon: User, roles: ['admin', 'student'] },
+        { name: 'Detection', path: '/detection', icon: ScanLine, roles: ['admin'] },
+        { name: 'Registration', path: '/admin/registration', icon: UserPlus, roles: ['admin'] },
+        { name: 'Workflow Management', path: '/admin/workflow', icon: Workflow, roles: ['admin'] },
     ];
 
     const visibleItems = role
