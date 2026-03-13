@@ -1,0 +1,116 @@
+<!-- otp_email.html — place this in your app's templates/ folder -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Your OTP Code</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f6f9;font-family:Arial,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="580" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+
+          <!-- HEADER -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#0891b2,#06b6d4);padding:36px 40px;text-align:center;">
+              <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.75);letter-spacing:2px;text-transform:uppercase;">Security Verification</p>
+              <h1 style="margin:8px 0 0;font-size:26px;color:#ffffff;font-weight:700;">Password Reset OTP</h1>
+            </td>
+          </tr>
+
+          <!-- BODY -->
+          <tr>
+            <td style="padding:40px 40px 20px;">
+              <p style="margin:0 0 10px;font-size:16px;color:#1a1a1a;">Hi <strong>{{ username }}</strong>,</p>
+              <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.6;">
+                We received a request to reset the password for your account.
+                Use the verification code below to proceed. <strong>Do not share this code with anyone.</strong>
+              </p>
+
+              <!-- OTP BOX -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding:10px 0 32px;">
+                  <div style="display:inline-block;background:#ecfeff;border:2px dashed #06b6d4;border-radius:12px;padding:24px 48px;">
+                    <p style="margin:0 0 6px;font-size:12px;color:#0891b2;letter-spacing:2px;text-transform:uppercase;font-weight:bold;">Your OTP Code</p>
+                    <p style="margin:0;font-size:42px;font-weight:900;letter-spacing:16px;color:#0891b2;">{{ otp }}</p> 
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- EXPIRY WARNING -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                <tr>
+                  <td style="background:#fff8ed;border-left:4px solid #f59e0b;border-radius:4px;padding:14px 16px;">
+                    <p style="margin:0;font-size:13px;color:#92400e;">
+                      ⏱ <strong>This code expires in 2 minutes.</strong>
+                      If it expires, simply request a new one.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- SECURITY NOTICE -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                <tr>
+                  <td style="background:#fef2f2;border-left:4px solid #ef4444;border-radius:4px;padding:14px 16px;">
+                    <p style="margin:0 0 6px;font-size:13px;color:#991b1b;font-weight:bold;">🔒 Security Notice</p>
+                    <p style="margin:0;font-size:13px;color:#991b1b;line-height:1.6;">
+                      If you did NOT request this password reset, your account may be at risk.
+                      Please <a href="#" style="color:#dc2626;font-weight:bold;">secure your account</a> immediately and ignore this email.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- DETAILS TABLE -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+                <tr style="background:#f9fafb;">
+                  <td style="padding:10px 16px;font-size:12px;color:#6b7280;font-weight:bold;text-transform:uppercase;letter-spacing:1px;">Request Details</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px;border-top:1px solid #e5e7eb;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="font-size:13px;color:#6b7280;width:120px;">Account</td>
+                        <td style="font-size:13px;color:#1a1a1a;font-weight:bold;">{{ email }}</td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:13px;color:#6b7280;padding-top:8px;">Time</td>
+                        <td style="font-size:13px;color:#1a1a1a;padding-top:8px;">{{ time }}</td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:13px;color:#6b7280;padding-top:8px;">Expires</td>
+                        <td style="font-size:13px;color:#1a1a1a;padding-top:8px;">{{ expiry }}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:24px 40px;text-align:center;">
+              <p style="margin:0 0 6px;font-size:12px;color:#9ca3af;">
+                This is an automated message — please do not reply to this email.
+              </p>
+              <p style="margin:0;font-size:12px;color:#9ca3af;">
+                © {{ year }} <strong style="color:#0891b2;">YourAppName</strong>. All rights reserved.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
