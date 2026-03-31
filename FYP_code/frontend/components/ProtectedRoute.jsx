@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { api, Spinner } from '../src/index';
 
-const ProtectedRoute = ({ children, allowedRoles, setRole, role }) => {
+const ProtectedRoute = ({ children, allowedRoles }) => {
     const [loading, setLoading] = useState(true);
     const [userRole, setUserRole] = useState(null);  // Local state for authorization check
 
@@ -14,20 +14,16 @@ const ProtectedRoute = ({ children, allowedRoles, setRole, role }) => {
 
                 // Set local state for immediate authorization check
                 setUserRole(fetchedRole);
-
-                // Sync with parent App state for navbar and other components
-                setRole(fetchedRole);
             } catch (error) {
                 // Clear both local and parent state on auth failure
                 setUserRole(null);
-                setRole(null);
             } finally {
                 setLoading(false);
             }
         };
 
         checkAuth();
-    }, [setRole]);
+    }, []);
 
     if (loading) {
         return <Spinner />

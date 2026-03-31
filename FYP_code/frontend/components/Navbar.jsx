@@ -14,14 +14,11 @@ import {
     Workflow,
     ScanLine
 } from 'lucide-react';
-
-import { useTheme } from '../context/ThemeContext';
 import { api } from '../src/index';
 
 const Navbar = ({ role, setRole }) => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { theme } = useTheme();
 
     const [isExpanded, setIsExpanded] = useState(true);
 

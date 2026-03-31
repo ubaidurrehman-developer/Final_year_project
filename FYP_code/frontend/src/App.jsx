@@ -1,5 +1,5 @@
-import { Routes, Route, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
 import {
   ProtectedRoute,
   Layout,
@@ -16,8 +16,6 @@ import Lenis from 'lenis';
 
 
 function App() {
-  const [role, setRole] = useState(null);
-
   // Initialize Lenis for smooth scrolling
   useEffect(() => {
     const lenis = new Lenis({
@@ -45,30 +43,48 @@ function App() {
 
   return (
     <div className="App">
-      <Layout role={role} setRole={setRole}>
+      <Layout>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path='/login' element={<Login setRole={setRole} />} />
+          <Route path='/login' element={<Login />} />
           <Route
             path='/admin'
             element={
-              <ProtectedRoute allowedRoles={['admin']} setRole={setRole} role={role}>
-                <Admin setRole={setRole} />
+              <ProtectedRoute allowedRoles={['admin']}>
+                <Admin />
               </ProtectedRoute>
             }
           />
           <Route
             path='/student'
             element={
-              <ProtectedRoute allowedRoles={['student']} setRole={setRole} role={role}>
-                <Student setRole={setRole} />
+              <ProtectedRoute allowedRoles={['student']}>
+                <Student />
               </ProtectedRoute>
             }
           />
-          <Route path='/admin/registration' element={<UserRegistration />} />
-          <Route path={`/forgot-password`} element={<ForgotPassword />} />
-          <Route path='/detection' element={<Detection />} />
-          <Route path={'/admin/workflow'} element={<WorkflowManagement />} />
+          <Route
+            path='/admin/registration'
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <UserRegistration />
+              </ProtectedRoute>} />
+          <Route
+            path={`/forgot-password`}
+            element={<ForgotPassword />}  
+          />
+          <Route
+            path='/detection'
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'student']}>
+                <Detection />
+              </ProtectedRoute>} />
+          <Route
+            path={'/admin/workflow'}
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <WorkflowManagement />
+              </ProtectedRoute>} />
         </Routes>
       </Layout>
     </div>

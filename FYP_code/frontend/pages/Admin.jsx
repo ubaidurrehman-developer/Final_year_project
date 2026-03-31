@@ -2,16 +2,15 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAlert } from '../context/AlertContext';
 
-export default function Admin({ setRole }) {
+export default function Admin() {
   const navigate = useNavigate();
   const { showAlert } = useAlert();
 
   useEffect(() => {
-    // Logout user (no movement detected)
     let timer;
     const logout = async () => {
-      setRole(null);
       showAlert({ message: "You have been logged out due to inactivity.", type: "warning", duration: 10000 });
+      await api.post('/logout/', {}, { withCredentials: true });
       navigate("/login");
     };
 

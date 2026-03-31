@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { User, Lock, ArrowLeft, GraduationCap, AlertCircle, Hexagon, Sparkles } from 'lucide-react';
 import { api, useAlert } from '../src/index';
 
-const Login = ({ setRole }) => {
+const Login = () => {
 
     const { showAlert } = useAlert();
     const navigate = useNavigate();
@@ -31,9 +31,7 @@ const Login = ({ setRole }) => {
                 { withCredentials: true }
             );
 
-            const { role, force_password_change } = response.data;
-            setRole(role);
-
+            const { role, force_password_change } = response.data;    
             
             if (role === 'admin') navigate('/admin');
             else if (role === 'student') navigate('/student');

@@ -1,10 +1,11 @@
 import { useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { LandingNavbar, Navbar, Footer } from '../src/index';
 
-const Layout = ({ children, role, setRole }) => {
+const Layout = ({ children }) => {
     const location = useLocation();
-
-    const noNavbar = ['/login', '/admin/registration', '/forgot-password', '/admin/workflow', `/${role}/change-password`];
+    const [role, setRole] = useState(null);    
+    const noNavbar = ['/login', '/forgot-password', '/admin/workflow', `/${role}/change-password`];
     const noFooterRoutes = ['/admin', '/student', '/login', '/admin/registration', `/${role}/forgot-password`, '/admin/workflow', `/${role}/change-password`];
     const hideFooter = noFooterRoutes.includes(location.pathname);
     const hideNavbar = noNavbar.includes(location.pathname);

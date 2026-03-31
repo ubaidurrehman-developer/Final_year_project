@@ -127,6 +127,7 @@ const Detection = () => {
                         raw: response.data,
                     },
                 });
+                console.log(response.data);
                 setTimeout(() => {
                     resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
                 }, 100);

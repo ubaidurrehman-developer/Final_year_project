@@ -253,9 +253,7 @@ export default function Registration() {
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
-    useEffect(()=>{
-        console.log(role)
-    },[role])
+
     const handleNext = () => {
         if (validateStep(currentStep)) {
             setCurrentStep((prev) => prev + 1);
@@ -372,7 +370,6 @@ export default function Registration() {
             setSameAddress(false);            
 
         } catch (err) {
-            console.log(err.response?.data);
             showAlert(
                 err.response?.data?.message || 'Registration Failed',
                 'error'

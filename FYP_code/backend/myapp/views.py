@@ -12,8 +12,6 @@ from rest_framework import status
 from .serializers import *
 from .models import *
 
-
-from django.views.decorators.csrf import csrf_exempt
 from PIL import Image
 from .detector import *
 
@@ -22,13 +20,13 @@ def home(request):
     return render(request, "home.html")
 
 
-class IsAdmin(BasePermission):
-    def has_permission(self, request, view):
-        return bool(
-            request.user
-            and request.user.is_authenticated
-            and (request.user.is_superuser or request.user.is_staff)
-        )
+# class IsAdmin(BasePermission):
+#     def has_permission(self, request, view):
+#         return bool(
+#             request.user
+#             and request.user.is_authenticated
+#             and (request.user.is_superuser or request.user.is_staff)
+#         )
 
 class CookieJWTAuthentication(JWTAuthentication):
     def authenticate(self, request):
@@ -44,23 +42,38 @@ class DetectionView(APIView):
     authentication_classes = [CookieJWTAuthentication]
     
     def post(self, request):
-        uploadedfile = request.FILES.get("file")
+        uploadedfile = request.FILES.get("file")        
         if not uploadedfile:
             return Response(
                 {"message": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST
         )
 
         try:
+            # Open the uplaoded image (b, w, h)
             image = Image.open(uploadedfile)
+
+            # STEP # 01 -> Preprocessing the image = [1, 3, 640, 640] => [batch, channels, height, width]
             input_data, scale, pad_x, pad_y = preprocess(image)
 
+            # STEP # 02 -> Run through YOLO Model
             outputs = session.run(None, {session.get_inputs()[0].name: input_data})
             print(f"[DEBUG] Model output shape: {outputs[0].shape}")
+            # returns numpy array 
 
+            # STEP # 03 -> Format Detection
             detections = format_detections(outputs, image.size, scale, pad_x, pad_y)
             print(f"[DEBUG] Number of detections: {len(detections)}")
 
+            # debug_raw_detections(uploadedfile,detections)
+
             detections = pixel_tighten_detections(image, detections, y_thresh=20) # tighting box and sorting from top-bottom
+            
+            # DEBUG: See what classes are in detections
+            detections = add_text_to_detections(detections, image)
+            # STEP # 05 -> Clusters Formation (Grouping)
+            final_results = clusters_formation(detections)
+            print(f"[DEBUG] Number of final grouped/individual items: {len(final_results)}")
+            
             annotated_img, crop_paths = visualize_and_Crop(
                 image.copy(), detections, save_dir="media/crops"
             )
@@ -70,7 +83,8 @@ class DetectionView(APIView):
             return Response(
                 {
                     "status": "success",
-                    "total_count": len(detections),
+                    "total_count": len(final_results),
+                    "detections": final_results,
                 }
             )
         except Exception as e:
@@ -198,7 +212,7 @@ class MeView(APIView):
 # -------------------------------------------------------------- (USER OPERATIONS) ---------------------------------------------------------------------- #
 class UserView(APIView):
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAdmin]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         serializer = UserSerializer(

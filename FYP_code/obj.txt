@@ -1,0 +1,365 @@
+[
+    {
+        "bbox": [
+            1259,
+            436,
+            1868,
+            498
+        ],
+        "confidence": 0.919921875,
+        "class": 3,
+        "text": "ADD/DROP FORM"
+    },
+    {
+        "bbox": [
+            1313,
+            709,
+            1507,
+            748
+        ],
+        "confidence": 0.9111328125,
+        "class": 3,
+        "text": "Semester:"
+    },
+    {
+        "bbox": [
+            1524,
+            709,
+            1563,
+            746
+        ],
+        "confidence": 0.859375,
+        "class": 1,
+        "text": "]"
+    },
+    {
+        "bbox": [
+            1551,
+            708,
+            1712,
+            758
+        ],
+        "confidence": 0.908203125,
+        "class": 3,
+        "text": "1 Spring"
+    },
+    {
+        "bbox": [
+            1727,
+            708,
+            1766,
+            747
+        ],
+        "confidence": 0.755859375,
+        "class": 1,
+        "text": "]"
+    },
+    {
+        "bbox": [
+            1754,
+            708,
+            1860,
+            747
+        ],
+        "confidence": 0.85791015625,
+        "class": 3,
+        "text": "1 Fall"
+    },
+    {
+        "bbox": [
+            332,
+            818,
+            472,
+            892
+        ],
+        "confidence": 0.8955078125,
+        "class": 3,
+        "text": "Name:‘"
+    },
+    {
+        "bbox": [
+            1964,
+            816,
+            2187,
+            896
+        ],
+        "confidence": 0.8974609375,
+        "class": 3,
+        "text": "Discipline:"
+    },
+    {
+        "bbox": [
+            1339,
+            836,
+            1615,
+            876
+        ],
+        "confidence": 0.9091796875,
+        "class": 3,
+        "text": "Roll Number:"
+    },
+    {
+        "bbox": [
+            352,
+            976,
+            513,
+            1016
+        ],
+        "confidence": 0.91357421875,
+        "class": 3,
+        "text": "Section:"
+    },
+    {
+        "bbox": [
+            976,
+            977,
+            1117,
+            1016
+        ],
+        "confidence": 0.91455078125,
+        "class": 3,
+        "text": "CGPA:"
+    },
+    {
+        "bbox": [
+            1569,
+            976,
+            2155,
+            1026
+        ],
+        "confidence": 0.92919921875,
+        "class": 3,
+        "text": "Credits Currently Registered:"
+    },
+    {
+        "bbox": [
+            294,
+            1093,
+            1342,
+            1684
+        ],
+        "confidence": 0.97705078125,
+        "class": 4,
+        "text": "Course(s) Dropped\nCredits\nI .\nN\nN\nI .\ne"
+    },
+    {
+        "bbox": [
+            1349,
+            1093,
+            2384,
+            1684
+        ],
+        "confidence": 0.97412109375,
+        "class": 4,
+        "text": "I R B\n—\n—\nI S N B\n—"
+    },
+    {
+        "bbox": [
+            1497,
+            1672,
+            1812,
+            1748
+        ],
+        "confidence": 0.92236328125,
+        "class": 3,
+        "text": "Signature Date:"
+    },
+    {
+        "bbox": [
+            435,
+            1687,
+            703,
+            1737
+        ],
+        "confidence": 0.93115234375,
+        "class": 3,
+        "text": "Student Sign:"
+    },
+    {
+        "bbox": [
+            468,
+            1828,
+            1065,
+            1877
+        ],
+        "confidence": 0.92822265625,
+        "class": 3,
+        "text": "Transcript Seen by Advisor:"
+    },
+    {
+        "bbox": [
+            1106,
+            1835,
+            1145,
+            1873
+        ],
+        "confidence": 0.876953125,
+        "class": 1,
+        "text": "]"
+    },
+    {
+        "bbox": [
+            1157,
+            1837,
+            1231,
+            1875
+        ],
+        "confidence": 0.876953125,
+        "class": 3,
+        "text": "Yes"
+    },
+    {
+        "bbox": [
+            1389,
+            1835,
+            1428,
+            1874
+        ],
+        "confidence": 0.82861328125,
+        "class": 1,
+        "text": "]"
+    },
+    {
+        "bbox": [
+            1420,
+            1835,
+            1504,
+            1875
+        ],
+        "confidence": 0.83837890625,
+        "class": 3,
+        "text": "| No"
+    },
+    {
+        "bbox": [
+            459,
+            1902,
+            720,
+            2026
+        ],
+        "confidence": 0.8994140625,
+        "class": 3,
+        "text": "Advisor\nComments:"
+    },
+    {
+        "bbox": [
+            411,
+            2113,
+            703,
+            2162
+        ],
+        "confidence": 0.91943359375,
+        "class": 3,
+        "text": "Adyvisor Sign:"
+    },
+    {
+        "bbox": [
+            1472,
+            2113,
+            1805,
+            2162
+        ],
+        "confidence": 0.93212890625,
+        "class": 3,
+        "text": "Signature Date:"
+    },
+    {
+        "bbox": [
+            774,
+            2253,
+            1068,
+            2292
+        ],
+        "confidence": 0.92138671875,
+        "class": 3,
+        "text": "HoD Decision"
+    },
+    {
+        "bbox": [
+            1106,
+            2260,
+            1145,
+            2299
+        ],
+        "confidence": 0.85791015625,
+        "class": 1,
+        "text": "]"
+    },
+    {
+        "bbox": [
+            1137,
+            2260,
+            1359,
+            2310
+        ],
+        "confidence": 0.90966796875,
+        "class": 3,
+        "text": "| Approved"
+    },
+    {
+        "bbox": [
+            1389,
+            2260,
+            1425,
+            2299
+        ],
+        "confidence": 0.83837890625,
+        "class": 1,
+        "text": "]"
+    },
+    {
+        "bbox": [
+            1422,
+            2260,
+            1729,
+            2310
+        ],
+        "confidence": 0.91455078125,
+        "class": 3,
+        "text": "| Not Approved"
+    },
+    {
+        "bbox": [
+            497,
+            2319,
+            724,
+            2405
+        ],
+        "confidence": 0.8984375,
+        "class": 3,
+        "text": "HoD Sign{"
+    },
+    {
+        "bbox": [
+            1472,
+            2342,
+            1805,
+            2391
+        ],
+        "confidence": 0.89697265625,
+        "class": 3,
+        "text": "Signature Date:"
+    },
+    {
+        "bbox": [
+            350,
+            2482,
+            703,
+            2531
+        ],
+        "confidence": 0.92236328125,
+        "class": 3,
+        "text": "Academics Sign:"
+    },
+    {
+        "bbox": [
+            1472,
+            2482,
+            1805,
+            2531
+        ],
+        "confidence": 0.900390625,
+        "class": 3,
+        "text": "Signature Date:"
+    }
+]
