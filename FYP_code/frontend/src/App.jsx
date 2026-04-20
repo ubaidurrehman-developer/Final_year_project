@@ -29,15 +29,17 @@ function App() {
       touchMultiplier: 2,
     });
 
+    let rafId;
     function raf(time) {
       lenis.raf(time);
-      requestAnimationFrame(raf);
+      rafId = requestAnimationFrame(raf);
     }
 
-    requestAnimationFrame(raf);
+    rafId = requestAnimationFrame(raf);
 
     return () => {
       lenis.destroy();
+      cancelAnimationFrame(rafId);
     };
   }, []);
 
@@ -68,7 +70,9 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <UserRegistration />
-              </ProtectedRoute>} />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path={`/forgot-password`}
             element={<ForgotPassword />}  
@@ -78,13 +82,17 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['admin', 'student']}>
                 <Detection />
-              </ProtectedRoute>} />
+              </ProtectedRoute>
+            }
+          />
           <Route
-            path={'/admin/workflow'}
+            path='/admin/workflow'
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <WorkflowManagement />
-              </ProtectedRoute>} />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </Layout>
     </div>

@@ -84,9 +84,9 @@ class Student(models.Model):
         SUSPENDED = "Suspended"
 
     class Degree(models.TextChoices):
-        BS = "BS", "Bachelor of Science"
-        MS = "MS", "Master of Science"
-        PHD = "PhD", "Doctor of Philosophy"
+        BS = "BS", "BS"
+        MS = "MS", "MS"
+        PHD = "PhD", "PhD"
 
     class Program(models.TextChoices):
         CS = "CS", "Computer Science"

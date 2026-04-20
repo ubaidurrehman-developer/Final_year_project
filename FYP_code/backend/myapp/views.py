@@ -1,32 +1,29 @@
 # views.py
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.permissions import BasePermission
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.shortcuts import render, get_object_or_404
+from django.conf import settings as django_settings
+from django.db.models import Count, Q
+from django.utils import timezone
 from rest_framework import status
 from .serializers import *
 from .models import *
 
 from PIL import Image
-from .detector import *
+from Backend.services.agents import FormProcessingAgent
+
+import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def home(request):
     return render(request, "home.html")
-
-
-# class IsAdmin(BasePermission):
-#     def has_permission(self, request, view):
-#         return bool(
-#             request.user
-#             and request.user.is_authenticated
-#             and (request.user.is_superuser or request.user.is_staff)
-#         )
 
 class CookieJWTAuthentication(JWTAuthentication):
     def authenticate(self, request):
@@ -49,45 +46,28 @@ class DetectionView(APIView):
         )
 
         try:
-            # Open the uplaoded image (b, w, h)
             image = Image.open(uploadedfile)
 
-            # STEP # 01 -> Preprocessing the image = [1, 3, 640, 640] => [batch, channels, height, width]
-            input_data, scale, pad_x, pad_y = preprocess(image)
+            # Resolve save paths relative to MEDIA_ROOT
+            crops_dir = os.path.join(django_settings.MEDIA_ROOT, "crops")
 
-            # STEP # 02 -> Run through YOLO Model
-            outputs = session.run(None, {session.get_inputs()[0].name: input_data})
-            print(f"[DEBUG] Model output shape: {outputs[0].shape}")
-            # returns numpy array 
+            # Run the full pipeline via the orchestrator agent
+            agent = FormProcessingAgent()
+            result = agent.run(image, save_dir=crops_dir, run_llm=True)
 
-            # STEP # 03 -> Format Detection
-            detections = format_detections(outputs, image.size, scale, pad_x, pad_y)
-            print(f"[DEBUG] Number of detections: {len(detections)}")
+            # Save annotated image
+            annotated_img = result.pop("annotated_image", None)
+            if annotated_img:
+                annotated_path = os.path.join(django_settings.MEDIA_ROOT, "annotated.jpg")
+                annotated_img.save(annotated_path)
 
-            # debug_raw_detections(uploadedfile,detections)
+            # Remove non-serializable fields before sending response
+            result.pop("crop_paths", None)
 
-            detections = pixel_tighten_detections(image, detections, y_thresh=20) # tighting box and sorting from top-bottom
-            
-            # DEBUG: See what classes are in detections
-            detections = add_text_to_detections(detections, image)
-            # STEP # 05 -> Clusters Formation (Grouping)
-            final_results = clusters_formation(detections)
-            print(f"[DEBUG] Number of final grouped/individual items: {len(final_results)}")
-            
-            annotated_img, crop_paths = visualize_and_Crop(
-                image.copy(), detections, save_dir="media/crops"
-            )
-            annotated_path = "media/annotated.jpg"
-            annotated_img.save(annotated_path)
+            return Response(result)
 
-            return Response(
-                {
-                    "status": "success",
-                    "total_count": len(final_results),
-                    "detections": final_results,
-                }
-            )
         except Exception as e:
+            logger.exception("Detection pipeline failed")
             return Response(
                 {"status": "error", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -149,7 +129,8 @@ class ForgotPasswordView(BasePasswordView):
 
         user = get_object_or_404(User, email=email)
         return self.validate_and_set_password(
-            user=user,            
+            user=user,
+            oldpassword=None,
             newpassword=request.data.get("newPassword"),
             confirmpassword=request.data.get("confirmPassword"),                  
             check_old_password=False
@@ -190,13 +171,14 @@ class LoginView(TokenObtainPairView):
                 }
         )
 
+        is_production = not django_settings.DEBUG
         response.set_cookie(
             key="auth_token",
             value=access,
             max_age=60 * 60,
             httponly=True,
-            secure=False,   # in production set to True
-            samesite="Lax", # in production set to "Strict" 
+            secure=is_production,
+            samesite="Strict" if is_production else "Lax",
         )
 
         return response
@@ -206,7 +188,10 @@ class MeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return Response({"role": "admin" if request.user.is_superuser else "student"})
+        return Response({
+            "role": "admin" if request.user.is_superuser else "student",
+            "must_change_password": request.user.must_change_password,
+        })
 
 
 # -------------------------------------------------------------- (USER OPERATIONS) ---------------------------------------------------------------------- #
@@ -221,10 +206,15 @@ class UserView(APIView):
         )
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        print(request.data["password"])
+        # Return password from context (if generated) or directly from data
+        password = serializer.context.get("generated_password") or request.data.get("password", "SET_SUCCESSFULLY")
 
         return Response(
-            {"message": "User created successfully", "username": user.username},
+            {
+                "message": "User created successfully", 
+                "username": user.username,
+                "password": password
+            },
             status=status.HTTP_201_CREATED,
         )
 
@@ -256,3 +246,118 @@ class UserView(APIView):
             {"message": "User deleted successfully"},
             status=status.HTTP_200_OK,
         )
+
+
+class DashboardView(APIView):
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # -- User & Student counts --
+        total_users = User.objects.count()
+        total_admins = User.objects.filter(is_superuser=True).count()
+        total_students = Student.objects.count()
+
+        # -- Student breakdowns --
+        students_by_program = dict(
+            Student.objects.values_list("program")
+            .annotate(count=Count("user"))
+            .order_by("program")
+        )
+        students_by_status = dict(
+            Student.objects.values_list("status")
+            .annotate(count=Count("user"))
+            .order_by("status")
+        )
+        students_by_campus = dict(
+            Student.objects.values_list("campus")
+            .annotate(count=Count("user"))
+            .order_by("campus")
+        )
+        students_by_degree = dict(
+            Student.objects.values_list("degree")
+            .annotate(count=Count("user"))
+            .order_by("degree")
+        )
+
+        # -- Course & Registration --
+        total_courses = Course.objects.count()
+        total_registrations = Registration.objects.count()
+        registrations_active = Registration.objects.filter(
+            status=Registration.Status.REGISTERED
+        ).count()
+        registrations_withdrawn = Registration.objects.filter(
+            status=Registration.Status.WITHDRAWN
+        ).count()
+
+        # Active Students
+        active_students = Student.objects.filter(status=Student.Status.ACTIVE).count()
+
+        # -- Academic requests --
+        pending_requests = AcademicRequest.objects.filter(
+            status=AcademicRequest.Status.PENDING
+        ).count()
+        approved_requests = AcademicRequest.objects.filter(
+            status=AcademicRequest.Status.APPROVED
+        ).count()
+        rejected_requests = AcademicRequest.objects.filter(
+            status=AcademicRequest.Status.REJECTED
+        ).count()
+
+        # -- Pending request list (latest 10) --
+        pending_list = list(
+            AcademicRequest.objects.filter(status=AcademicRequest.Status.PENDING)
+            .select_related("student__user")
+            .order_by("-request_date")[:10]
+            .values(
+                "id",
+                "type",
+                "request_date",
+                "student__roll_no",
+                "student__user__full_name",
+            )
+        )
+
+        # -- Recent users (latest 8) --
+        recent_users = list(
+            User.objects.order_by("-date_joined")[:8].values(
+                "id",
+                "username",
+                "full_name",
+                "email",
+                "is_superuser",
+                "date_joined",
+            )
+        )
+
+        # -- Semester info --
+        today = timezone.now().date()
+        current_semester = (
+            Semester.objects.filter(start_date__lte=today, end_date__gte=today)
+            .values("name", "start_date", "end_date")
+            .first()
+        )
+
+        return Response({
+            "counts": {
+                "total_users": total_users,
+                "total_admins": total_admins,
+                "total_students": total_students,
+                "active_students": active_students,
+                "total_courses": total_courses,
+                "total_registrations": total_registrations,
+                "registrations_active": registrations_active,
+                "registrations_withdrawn": registrations_withdrawn,
+                "pending_requests": pending_requests,
+                "approved_requests": approved_requests,
+                "rejected_requests": rejected_requests,
+            },
+            "students_by_program": students_by_program,
+            "students_by_status": students_by_status,
+            "students_by_campus": students_by_campus,
+            "students_by_degree": students_by_degree,
+            "pending_list": pending_list,
+            "recent_users": recent_users,
+            "current_semester": current_semester,
+        })
+

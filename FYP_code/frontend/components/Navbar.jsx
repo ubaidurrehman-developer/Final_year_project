@@ -1,26 +1,43 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import {
-    ArrowLeft,
-    ArrowRight,
+    PanelLeftClose,
+    PanelLeftOpen,
     GraduationCap,
-    ShieldCheck,
     LogIn,
     LogOut,
     UserPlus,
     CircleUser,
     Workflow,
-    ScanLine
+    ScanLine,
+    Menu,
+    X,
+    LayoutDashboard
 } from 'lucide-react';
 import { api } from '../src/index';
 
-const Navbar = ({ role, setRole }) => {
+const Navbar = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    const [isExpanded, setIsExpanded] = useState(true);
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [role, setRole] = useState(null);
+    const [mobileOpen, setMobileOpen] = useState(false);
+
+    // Fetch role from backend on mount + on every route change
+    useEffect(() => {
+        const fetchRole = async () => {
+            try {
+                const res = await api.get('/me/', { withCredentials: true });
+                setRole(res.data.role);
+            } catch {
+                setRole(null);
+            }
+        };
+        fetchRole();
+    }, [location.pathname]);
 
     const handleLogout = async () => {
         try {
@@ -28,188 +45,87 @@ const Navbar = ({ role, setRole }) => {
         } catch (error) {
             console.log(error);
         }
-
         setRole(null);
+        setMobileOpen(false);
         navigate('/');
     };
 
     const navItems = [
         { name: 'Profile', path: '/profile', icon: CircleUser, roles: ['admin', 'student'] },
         { name: 'Student', path: '/student', icon: GraduationCap, roles: ['student'] },
-        { name: 'Admin', path: '/admin', icon: ShieldCheck, roles: ['admin'] },
-        { name: 'Detection', path: '/detection', icon: ScanLine, roles: ['admin'] },
+        { name: 'Dashboard', path: '/admin', icon: LayoutDashboard, roles: ['admin'] },
+        { name: 'Detection', path: '/detection', icon: ScanLine, roles: ['admin', 'student'] },
         { name: 'Registration', path: '/admin/registration', icon: UserPlus, roles: ['admin'] },
-        { name: 'Workflow Management', path: '/admin/workflow', icon: Workflow, roles: ['admin'] },
+        { name: 'Workflow', path: '/admin/workflow', icon: Workflow, roles: ['admin'] },
     ];
 
     const visibleItems = role
         ? navItems.filter((item) => item.roles.includes(role))
         : [];
 
+    // Sidebar widths
+    const collapsedW = 72;
+    const expandedW = 240;
+
     return (
         <>
-            {/* Desktop Sidebar */}
-            <div className="fixed top-4 left-4 z-50 h-[calc(100vh-2rem)] hidden md:flex flex-col justify-center">
-                <motion.nav
-                    initial={{ width: 80 }}
-                    animate={{ width: isExpanded ? 80 : 56 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    className={`
-                        bg-white/90 backdrop-blur-md border border-gray-100
-                        rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.05)]
-                        py-6
-                        no-scrollbar
-                        dark:bg-[#171717]/90 dark:border-white/10
-                        ${isExpanded ? 'overflow-y-auto' : 'overflow-visible'}
-                    `}
-                >
-                    <div className="w-full flex flex-col items-center gap-2 relative">
+            {/* ─── Desktop Sidebar ─── */}
+            <motion.aside
+                initial={false}
+                animate={{ width: isExpanded ? expandedW : collapsedW }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                className="
+                    fixed top-0 left-0 z-50
+                    h-screen
+                    hidden md:flex flex-col
+                    bg-white/90 backdrop-blur-xl
+                    border-r border-gray-200/60
+                    shadow-[4px_0_24px_rgba(0,0,0,0.04)]
+                    dark:bg-[#111111]/95 dark:border-white/[0.06]
+                    overflow-hidden
+                "
+            >
+                {/* ── Header / Toggle ── */}
+                <div className="flex items-center h-16 px-4 shrink-0">
+                    <button
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className="
+                            w-10 h-10 rounded-xl
+                            flex items-center justify-center
+                            text-gray-500 dark:text-gray-400
+                            hover:bg-gray-100 dark:hover:bg-white/[0.06]
+                            hover:text-primary-500
+                            transition-all duration-200
+                            cursor-pointer
+                        "
+                        aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
+                    >
+                        {isExpanded
+                            ? <PanelLeftClose size={20} strokeWidth={1.8} />
+                            : <PanelLeftOpen size={20} strokeWidth={1.8} />
+                        }
+                    </button>
 
-                        {/* Arrow Button (TOP) */}
-                        <button
-                            onClick={() => setIsExpanded(!isExpanded)}
-                            className="
-                                mb-3 w-8 h-8
-                                flex items-center justify-center
-                                rounded-full
-                                bg-white dark:bg-[#171717]
-                                border border-gray-100 dark:border-white/10
-                                shadow-md
-                                hover:scale-110
-                                transition-transform
-                                cursor-pointer                                
-                                z-50
-                            "
-                        >
-                            {isExpanded ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
-                        </button>
+                    <AnimatePresence>
+                        {isExpanded && (
+                            <motion.span
+                                initial={{ opacity: 0, x: -8 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -8 }}
+                                transition={{ duration: 0.15 }}
+                                className="ml-3 text-sm font-bold tracking-tight text-primary-600 dark:text-primary-400 whitespace-nowrap"
+                            >
+                                Formulate
+                            </motion.span>
+                        )}
+                    </AnimatePresence>
+                </div>
 
-                        <AnimatePresence>
-                            {isExpanded && (
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    className="flex flex-col items-center w-full gap-2"
-                                >
-                                    {/* Navigation */}
-                                    <ul className="flex flex-col gap-3 w-full px-3">
-                                        {visibleItems.map((item) => {
-                                            const isActive = location.pathname === item.path;
-                                            const Icon = item.icon;
+                {/* ── Separator ── */}
+                <div className="mx-3 border-t border-gray-200/60 dark:border-white/[0.06]" />
 
-                                            return (
-                                                <li key={item.name} className="relative group">
-                                                    <Link
-                                                        to={item.path}
-                                                        className={`
-                                                            relative flex items-center justify-center
-                                                            w-14 h-14 rounded-2xl
-                                                            transition-all duration-300
-                                                            ${isActive
-                                                                ? 'text-white bg-primary-400 shadow-lg shadow-primary-400/30'
-                                                                : 'text-gray-400 hover:text-white hover:bg-primary-400 dark:text-gray-500'
-                                                            }
-                                                        `}
-                                                    >
-                                                        <Icon size={24} strokeWidth={2} />
-
-                                                        {/* Tooltip */}
-                                                        <span
-                                                            className="
-                                                                absolute left-full top-1/2
-                                                                -translate-y-1/2 ml-3
-                                                                px-3 py-1.5 rounded-xl
-                                                                bg-white dark:bg-[#262626]
-                                                                border border-gray-100 dark:border-white/10
-                                                                shadow-lg
-                                                                text-primary-600 dark:text-primary-400
-                                                                font-semibold text-sm whitespace-nowrap
-                                                                opacity-0 group-hover:opacity-100
-                                                                group-hover:translate-x-0 -translate-x-2
-                                                                pointer-events-none
-                                                                transition-all duration-300
-                                                                z-20
-                                                            "
-                                                        >
-                                                            {item.name}
-                                                        </span>
-                                                    </Link>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
-
-                                    {/* Bottom Actions */}
-                                    <div className="mt-auto px-3 pb-2 w-full flex flex-col gap-3">
-                                        {!role ? (
-                                            <Link to="/login" className="relative group">
-                                                <div className="
-                                                    flex items-center justify-center
-                                                    w-14 h-14 rounded-2xl
-                                                    bg-gray-50 text-gray-400
-                                                    hover:bg-primary-400 hover:text-white
-                                                    transition-all duration-300
-                                                    dark:bg-white/5 dark:text-gray-500
-                                                ">
-                                                    <LogIn size={24} />
-                                                </div>
-
-                                                <span className="
-                                                    absolute left-full top-1/2
-                                                    -translate-y-1/2 ml-3
-                                                    px-3 py-1.5 rounded-xl
-                                                    bg-white dark:bg-[#262626]
-                                                    border border-gray-100 dark:border-white/10
-                                                    shadow-lg
-                                                    text-primary-600 dark:text-primary-400
-                                                    font-semibold text-sm whitespace-nowrap
-                                                    opacity-0 group-hover:opacity-100
-                                                    group-hover:translate-x-0 -translate-x-2
-                                                    pointer-events-none transition-all duration-300
-                                                ">
-                                                    Sign In
-                                                </span>
-                                            </Link>
-                                        ) : (
-                                            <button onClick={handleLogout} className="relative group">
-                                                <div className="
-                                                    flex items-center justify-center
-                                                    w-14 h-14 rounded-2xl
-                                                    bg-red-50 text-red-400
-                                                    hover:bg-red-500 hover:text-white
-                                                    transition-all duration-300
-                                                    dark:bg-white/5
-                                                ">
-                                                    <LogOut size={24} />
-                                                </div>
-
-                                                <span className="
-                                                    absolute left-full top-1/2
-                                                    -translate-y-1/2 ml-3
-                                                    px-3 py-1.5 rounded-xl
-                                                    bg-white dark:bg-[#262626]
-                                                    border border-gray-100 dark:border-white/10
-                                                    shadow-lg
-                                                    text-red-500
-                                                    font-semibold text-sm whitespace-nowrap
-                                                    opacity-0 group-hover:opacity-100
-                                                    group-hover:translate-x-0 -translate-x-2
-                                                    pointer-events-none transition-all duration-300
-                                                ">
-                                                    Logout
-                                                </span>
-                                            </button>
-                                        )}
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
-                </motion.nav>
-
-                {/* Mobile Bottom Bar */}
-                <div className="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-xl border-t border-gray-200 md:hidden z-50 px-6 py-4 flex justify-between items-center dark:bg-[#171717]/90 dark:border-white/10">
+                {/* ── Nav Items ── */}
+                <nav className="flex-1 py-4 px-3 flex flex-col gap-1 overflow-y-auto no-scrollbar">
                     {visibleItems.map((item) => {
                         const isActive = location.pathname === item.path;
                         const Icon = item.icon;
@@ -218,18 +134,260 @@ const Navbar = ({ role, setRole }) => {
                             <Link
                                 key={item.name}
                                 to={item.path}
-                                className={`flex flex-col items-center gap-1 ${
-                                    isActive ? 'text-primary-400' : 'text-gray-400'
-                                }`}
+                                className={`
+                                    group relative flex items-center
+                                    h-11 rounded-xl
+                                    transition-all duration-200
+                                    ${isExpanded ? 'px-3 gap-3' : 'justify-center'}
+                                    ${isActive
+                                        ? 'bg-primary-500 text-white shadow-md shadow-primary-500/25'
+                                        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.06] dark:hover:text-gray-200'
+                                    }
+                                `}
                             >
-                                <Icon size={24} />
-                                <span className="text-[10px] font-medium">
-                                    {item.name}
-                                </span>
+                                <Icon size={20} strokeWidth={1.8} className="shrink-0" />
+
+                                {/* Label — only when expanded */}
+                                <AnimatePresence>
+                                    {isExpanded && (
+                                        <motion.span
+                                            initial={{ opacity: 0, width: 0 }}
+                                            animate={{ opacity: 1, width: 'auto' }}
+                                            exit={{ opacity: 0, width: 0 }}
+                                            transition={{ duration: 0.15 }}
+                                            className="text-sm font-medium whitespace-nowrap overflow-hidden"
+                                        >
+                                            {item.name}
+                                        </motion.span>
+                                    )}
+                                </AnimatePresence>
+
+                                {/* Tooltip — only when collapsed */}
+                                {!isExpanded && (
+                                    <span className="
+                                        absolute left-full top-1/2 -translate-y-1/2 ml-3
+                                        px-3 py-1.5 rounded-lg
+                                        bg-gray-900 dark:bg-gray-100
+                                        text-white dark:text-gray-900
+                                        text-xs font-medium whitespace-nowrap
+                                        opacity-0 group-hover:opacity-100
+                                        scale-95 group-hover:scale-100
+                                        pointer-events-none
+                                        transition-all duration-200
+                                        shadow-lg
+                                        z-[60]
+                                    ">
+                                        {item.name}
+                                    </span>
+                                )}
                             </Link>
                         );
                     })}
+                </nav>
+
+                {/* ── Bottom Actions ── */}
+                <div className="px-3 pb-4 shrink-0">
+                    <div className="border-t border-gray-200/60 dark:border-white/[0.06] pt-3">
+                        {!role ? (
+                            <Link
+                                to="/login"
+                                className={`
+                                    group relative flex items-center
+                                    h-11 rounded-xl
+                                    text-gray-500 dark:text-gray-400
+                                    hover:bg-primary-50 hover:text-primary-600
+                                    dark:hover:bg-primary-500/10 dark:hover:text-primary-400
+                                    transition-all duration-200
+                                    ${isExpanded ? 'px-3 gap-3' : 'justify-center'}
+                                `}
+                            >
+                                <LogIn size={20} strokeWidth={1.8} className="shrink-0" />
+                                <AnimatePresence>
+                                    {isExpanded && (
+                                        <motion.span
+                                            initial={{ opacity: 0, width: 0 }}
+                                            animate={{ opacity: 1, width: 'auto' }}
+                                            exit={{ opacity: 0, width: 0 }}
+                                            transition={{ duration: 0.15 }}
+                                            className="text-sm font-medium whitespace-nowrap overflow-hidden"
+                                        >
+                                            Sign In
+                                        </motion.span>
+                                    )}
+                                </AnimatePresence>
+
+                                {!isExpanded && (
+                                    <span className="
+                                        absolute left-full top-1/2 -translate-y-1/2 ml-3
+                                        px-3 py-1.5 rounded-lg
+                                        bg-gray-900 dark:bg-gray-100
+                                        text-white dark:text-gray-900
+                                        text-xs font-medium whitespace-nowrap
+                                        opacity-0 group-hover:opacity-100
+                                        scale-95 group-hover:scale-100
+                                        pointer-events-none transition-all duration-200 shadow-lg z-[60]
+                                    ">
+                                        Sign In
+                                    </span>
+                                )}
+                            </Link>
+                        ) : (
+                            <button
+                                onClick={handleLogout}
+                                className={`
+                                    group relative flex items-center w-full
+                                    h-11 rounded-xl
+                                    text-red-400
+                                    hover:bg-red-50 hover:text-red-600
+                                    dark:hover:bg-red-500/10 dark:hover:text-red-400
+                                    transition-all duration-200
+                                    cursor-pointer
+                                    ${isExpanded ? 'px-3 gap-3' : 'justify-center'}
+                                `}
+                            >
+                                <LogOut size={20} strokeWidth={1.8} className="shrink-0" />
+                                <AnimatePresence>
+                                    {isExpanded && (
+                                        <motion.span
+                                            initial={{ opacity: 0, width: 0 }}
+                                            animate={{ opacity: 1, width: 'auto' }}
+                                            exit={{ opacity: 0, width: 0 }}
+                                            transition={{ duration: 0.15 }}
+                                            className="text-sm font-medium whitespace-nowrap overflow-hidden"
+                                        >
+                                            Logout
+                                        </motion.span>
+                                    )}
+                                </AnimatePresence>
+
+                                {!isExpanded && (
+                                    <span className="
+                                        absolute left-full top-1/2 -translate-y-1/2 ml-3
+                                        px-3 py-1.5 rounded-lg
+                                        bg-red-600 text-white
+                                        text-xs font-medium whitespace-nowrap
+                                        opacity-0 group-hover:opacity-100
+                                        scale-95 group-hover:scale-100
+                                        pointer-events-none transition-all duration-200 shadow-lg z-[60]
+                                    ">
+                                        Logout
+                                    </span>
+                                )}
+                            </button>
+                        )}
+                    </div>
                 </div>
+            </motion.aside>
+
+            {/* ─── Mobile Bottom Bar ─── */}
+            <div className="fixed bottom-0 left-0 w-full md:hidden z-50">
+                <div className="
+                    bg-white/90 backdrop-blur-xl
+                    border-t border-gray-200/60
+                    dark:bg-[#111111]/95 dark:border-white/[0.06]
+                    px-2 py-2
+                    flex justify-around items-center
+                    shadow-[0_-4px_24px_rgba(0,0,0,0.04)]
+                ">
+                    {visibleItems.slice(0, 4).map((item) => {
+                        const isActive = location.pathname === item.path;
+                        const Icon = item.icon;
+
+                        return (
+                            <Link
+                                key={item.name}
+                                to={item.path}
+                                className={`
+                                    flex flex-col items-center gap-0.5
+                                    px-3 py-1.5 rounded-xl
+                                    transition-all duration-200
+                                    ${isActive
+                                        ? 'text-primary-500'
+                                        : 'text-gray-400 dark:text-gray-500'
+                                    }
+                                `}
+                            >
+                                <Icon size={20} strokeWidth={1.8} />
+                                <span className="text-[10px] font-medium">{item.name}</span>
+                            </Link>
+                        );
+                    })}
+
+                    {/* More button for overflow items */}
+                    {visibleItems.length > 4 && (
+                        <button
+                            onClick={() => setMobileOpen(!mobileOpen)}
+                            className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-gray-400 cursor-pointer"
+                        >
+                            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+                            <span className="text-[10px] font-medium">More</span>
+                        </button>
+                    )}
+
+                    {/* Logout in mobile (if no overflow) */}
+                    {role && visibleItems.length <= 4 && (
+                        <button
+                            onClick={handleLogout}
+                            className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-red-400 cursor-pointer"
+                        >
+                            <LogOut size={20} strokeWidth={1.8} />
+                            <span className="text-[10px] font-medium">Logout</span>
+                        </button>
+                    )}
+                </div>
+
+                {/* Mobile overflow sheet */}
+                <AnimatePresence>
+                    {mobileOpen && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 20 }}
+                            className="
+                                absolute bottom-full left-0 right-0
+                                mb-2 mx-4
+                                bg-white/95 dark:bg-[#171717]/95
+                                backdrop-blur-xl
+                                border border-gray-200/60 dark:border-white/[0.06]
+                                rounded-2xl shadow-2xl
+                                p-4
+                            "
+                        >
+                            {visibleItems.slice(4).map((item) => {
+                                const Icon = item.icon;
+                                const isActive = location.pathname === item.path;
+                                return (
+                                    <Link
+                                        key={item.name}
+                                        to={item.path}
+                                        onClick={() => setMobileOpen(false)}
+                                        className={`
+                                            flex items-center gap-3 px-3 py-2.5 rounded-xl
+                                            transition-all duration-200
+                                            ${isActive
+                                                ? 'bg-primary-500 text-white'
+                                                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.06]'
+                                            }
+                                        `}
+                                    >
+                                        <Icon size={18} strokeWidth={1.8} />
+                                        <span className="text-sm font-medium">{item.name}</span>
+                                    </Link>
+                                );
+                            })}
+
+                            {role && (
+                                <button
+                                    onClick={handleLogout}
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 w-full mt-1 transition-all cursor-pointer"
+                                >
+                                    <LogOut size={18} strokeWidth={1.8} />
+                                    <span className="text-sm font-medium">Logout</span>
+                                </button>
+                            )}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         </>
     );

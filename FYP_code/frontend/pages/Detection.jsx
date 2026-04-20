@@ -342,11 +342,6 @@ const Detection = () => {
                                                 <div className="text-xs text-[var(--text-muted)] mt-1">Time Taken</div>
                                             </div>
                                         </div>
-
-                                        {/* JSON Output */}
-                                        <pre className="bg-gray-900 text-gray-300 p-4 rounded-xl text-xs overflow-x-auto max-h-[300px] overflow-y-auto font-mono">
-                                            <code>{JSON.stringify(results.raw, null, 2)}</code>
-                                        </pre>
                                     </div>
                                 </motion.div>
                             )}

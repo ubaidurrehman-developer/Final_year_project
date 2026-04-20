@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAlert } from '../context/AlertContext';
+import { api } from '../src/index';
 
-export default function Student({ setRole }) {
+export default function Student() {
   const navigate = useNavigate();
   const { showAlert } = useAlert();
 
@@ -10,8 +11,8 @@ export default function Student({ setRole }) {
     // Logout user (no movement detected)
     let timer;
     const logout = async () => {
-      setRole(null);
       showAlert({ message: "You have been logged out due to inactivity.", type: "warning", duration: 10000 });
+      await api.post('/logout/', {}, { withCredentials: true });
       navigate("/login");
     };
 
@@ -29,7 +30,7 @@ export default function Student({ setRole }) {
       events.forEach(e => window.removeEventListener(e, resetTimer));
       clearTimeout(timer);
     };
-  }, [navigate, showAlert, setRole]);
+  }, [navigate, showAlert]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">

@@ -90,7 +90,7 @@ export default function Registration() {
     const degreeOptions = [
         { value: "BS", label: "Bachelor of Science" },
         { value: "MS", label: "Master of Science" },
-        { value: "PHD", label: "Doctor of Philosophy" }
+        { value: "PhD", label: "Doctor of Philosophy" }
     ];
 
     const formatMobile = (value) => {
@@ -368,6 +368,7 @@ export default function Registration() {
 
             setCurrentStep(1);
             setSameAddress(false);            
+            setLoading(false);
 
         } catch (err) {
             showAlert(

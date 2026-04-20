@@ -106,23 +106,28 @@ class UserSerializer(serializers.ModelSerializer):
 
         # 3. Handle Password
         password = validated_data.pop("password", None)
-        if password is None:
-            password = generate_password()                        
+        auto_generated = password is None
+        if auto_generated:
+            password = generate_password()
 
         # 4. Create User
         created_by = request.user if request.user.is_authenticated else None
 
-        user = User.objects.create_user(            
+        user = User.objects.create_user(
             first_name=first,
             last_name=last,
-            username=username, 
-            password=password,             
-            created_by=created_by,            
+            username=username,
+            password=password,
+            created_by=created_by,
             **validated_data
         )
 
-        user.must_change_password = True
+        # Only force password change when the password was auto-generated
+        user.must_change_password = auto_generated
         user.save(update_fields=["must_change_password"])
+
+        # Pass the password out via context
+        self.context["generated_password"] = password
 
         if not student_data:
             group, _ = Group.objects.get_or_create(name="ADMIN")

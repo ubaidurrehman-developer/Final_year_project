@@ -1,4 +1,4 @@
-﻿opencv-python
+opencv-python
 onnxruntime
 pillow
 django
@@ -8,3 +8,5 @@ django-cors-headers
 djangorestframework-simplejwt
 psycopg2-binary
 pytesseract
+openai>=1.0.0
+numpy

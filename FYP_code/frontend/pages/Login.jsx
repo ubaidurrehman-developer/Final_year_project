@@ -33,15 +33,15 @@ const Login = () => {
 
             const { role, force_password_change } = response.data;    
             
+            if (force_password_change) {
+                showAlert('You must change your password before continuing.', 'warning', 5000);
+                navigate('/forgot-password');
+                return;
+            }
+
             if (role === 'admin') navigate('/admin');
             else if (role === 'student') navigate('/student');
             else setError("You do not have access");
-
-            if (force_password_change) {
-                showAlert('You must change your password before continuing.', 'warning', 5000);
-                navigate(`/${role}/change-password`);
-                return;
-            }
 
             showAlert("Login successful", "success", 2000);
 

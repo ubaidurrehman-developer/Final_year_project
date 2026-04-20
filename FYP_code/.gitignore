@@ -5,8 +5,11 @@ __pycache__/
 *.pyd
 .DS_Store
 .env
-db.sqlite3
 /home/drpc/Desktop/FYP_code/venv/
 node_modules/
 .vscode/
 .idea/
+*.pt
+media/
+
+

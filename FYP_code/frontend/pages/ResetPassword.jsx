@@ -3,31 +3,53 @@ import { motion } from 'framer-motion';
 import { Lock, ArrowLeft, GraduationCap, AlertCircle, Hexagon, Sparkles, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../src/index';
+import { useAlert } from '../context/AlertContext';
 
 const ForgotPassword = () => {
+    const { showAlert } = useAlert();
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
-        newpassword: '',
-        oldpassword: '',
-        confirmpassword: '',
+        email: '',
+        newPassword: '',
+        oldPassword: '',
+        confirmPassword: '',
     });
 
-    useEffect(() => {
-        const token = document.cookie.includes("access")
-        if (!token) return;
-        setIsLoggedIn(true);
-    }, [])
+    const getCookie = (name) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    };
 
+    useEffect(() => {
+        if (getCookie("auth_token")) {
+            setIsLoggedIn(true);
+        }
+    }, [])
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-
-        // send OTP Email
-
+        
+        if (isLoggedIn && formData.newPassword !== formData.confirmPassword) {
+            setError("Passwords do not match");
+            return;
+        }
+        
+        try {
+            const url = isLoggedIn ? '/reset-password/' : '/forgot-password/';
+            const response = await api.post(url, formData);
+            if (response.status === 200) {
+                showAlert(response.data.message || "Operation completed.", "success");
+                navigate('/login');
+            }
+        } catch (err) {
+            setError(err.response?.data?.message || "An error occurred. Please try again.");
+        }
     };
 
     const handleChange = (e) =>
@@ -111,7 +133,9 @@ const ForgotPassword = () => {
                     {/* Inner Glass Card */}
                     <div className="w-full max-w-sm border border-gray-300 text-gray-900 bg-white/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.05)] rounded-[2rem] p-8 relative z-10">
                         <div className="mb-8 text-center">
-                            <h3 className="text-2xl font-bold text-gray-900 mb-2">Forgotten Password?</h3>
+                            <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                                {isLoggedIn ? 'Reset Password' : 'Forgotten Password?'}
+                            </h3>
                             <p className="text-gray-500 text-sm">{isLoggedIn ? "Please enter your details to reset your password." : "Please enter your email address and we'll send you a verification code to reset your password."}</p>
                         </div>
 
@@ -131,7 +155,7 @@ const ForgotPassword = () => {
                                     <input
                                         type={isLoggedIn ? "password" : "email"}
                                         name={isLoggedIn ? "oldPassword" : "email"}
-                                        value={isLoggedIn ? formData.oldpassword : formData.email}
+                                        value={isLoggedIn ? formData.oldPassword : formData.email}
                                         onChange={handleChange}
                                         placeholder={isLoggedIn ? "Old Password" : "Email"}
                                         className="w-full bg-white/70 border border-gray-300 text-gray-800 rounded-full px-11 py-3 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 transition-all placeholder:text-gray-400 text-sm"
@@ -148,7 +172,7 @@ const ForgotPassword = () => {
                                             <input
                                                 type="password"
                                                 name="newPassword"
-                                                value={formData.newpassword}
+                                                value={formData.newPassword}
                                                 onChange={handleChange}
                                                 placeholder="New Password"
                                                 className="w-full bg-white/70 border border-gray-300 text-gray-800 rounded-full px-11 py-3 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 transition-all placeholder:text-gray-400 text-sm"
@@ -163,7 +187,7 @@ const ForgotPassword = () => {
                                             <input
                                                 type="password"
                                                 name="confirmPassword"
-                                                value={formData.confirmpassword}
+                                                value={formData.confirmPassword}
                                                 onChange={handleChange}
                                                 placeholder="Confirm Password"
                                                 className="w-full bg-white/70 border border-gray-300 text-gray-800 rounded-full px-11 py-3 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 transition-all placeholder:text-gray-400 text-sm"
