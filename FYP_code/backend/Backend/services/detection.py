@@ -124,7 +124,7 @@ def nms(boxes: np.ndarray, scores: np.ndarray, iou_thresh=0.45) -> list:
 # ----------------------------
 
 def format_detections(
-    outputs, image_size, scale, pad_x, pad_y, conf_thresh=0.05, iou_thresh=0.30
+    outputs, image_size, scale, pad_x, pad_y, conf_thresh=0.01, iou_thresh=0.50
 ) -> list:
     """
     Parse YOLOv11 ONNX output and transform coordinates to original image space.

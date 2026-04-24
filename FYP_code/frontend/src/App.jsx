@@ -1,17 +1,17 @@
+import React, { Suspense, lazy } from "react";
 import { Routes, Route } from 'react-router-dom';
 import { useEffect } from 'react';
-import {
-  ProtectedRoute,
-  Layout,
-  Home,
-  Login,
-  Admin,
-  Student,
-  UserRegistration,
-  ForgotPassword,
-  Detection,
-  WorkflowManagement,
-} from './index';
+import { ProtectedRoute, Layout } from './index';
+
+// Lazy load pages
+const Home = lazy(() => import('../pages/Home'));
+const Login = lazy(() => import('../pages/Login'));
+const Admin = lazy(() => import('../pages/Admin'));
+const Student = lazy(() => import('../pages/Student'));
+const UserRegistration = lazy(() => import('../pages/UserRegistration'));
+const ForgotPassword = lazy(() => import('../pages/ResetPassword'));
+const Detection = lazy(() => import('../pages/Detection'));
+const WorkflowManagement = lazy(() => import('../pages/WorkflowManagement'));
 import Lenis from 'lenis';
 
 
@@ -46,54 +46,56 @@ function App() {
   return (
     <div className="App">
       <Layout>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path='/login' element={<Login />} />
-          <Route
-            path='/admin'
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <Admin />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path='/student'
-            element={
-              <ProtectedRoute allowedRoles={['student']}>
-                <Student />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path='/admin/registration'
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <UserRegistration />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path={`/forgot-password`}
-            element={<ForgotPassword />}  
-          />
-          <Route
-            path='/detection'
-            element={
-              <ProtectedRoute allowedRoles={['admin', 'student']}>
-                <Detection />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path='/admin/workflow'
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <WorkflowManagement />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
+        <Suspense fallback={<div>Loading...</div>}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path='/login' element={<Login />} />
+            <Route
+              path='/admin'
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <Admin />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/student'
+              element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <Student />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/admin/registration'
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <UserRegistration />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path={`/forgot-password`}
+              element={<ForgotPassword />}
+            />
+            <Route
+              path='/detection'
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'student']}>
+                  <Detection />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/admin/workflow'
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <WorkflowManagement />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </Suspense>
       </Layout>
     </div>
   );

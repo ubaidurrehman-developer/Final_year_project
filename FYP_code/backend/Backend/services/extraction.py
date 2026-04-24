@@ -88,59 +88,80 @@ def pixel_tighten_detections(img: Image.Image, detections: list, y_thresh=20) ->
     )
 
 
-import concurrent.futures
-
 # --------------------
 # OCR text extraction
 # --------------------
 
-def _process_single_crop(det, image_np):
-    x1, y1, x2, y2 = map(int, det["bbox"])
-    crop = image_np[y1:y2, x1:x2]
-
-    if crop.size == 0:
-        det["text"] = ""
-        return
-
-    text = pytesseract.image_to_string(crop, config="--psm 7").strip()
-    lines = text.split("\n")
-    from .cleaning import clean_ocr_text
-    cleaned_lines = clean_ocr_text(lines)
-    det["text"] = " ".join(cleaned_lines)
-
 def add_text_to_detections(detections: list, image: Image.Image) -> list:
-    """Run Tesseract OCR on each detection crop and attach the text in parallel."""
+    """Run Tesseract OCR once on the entire image and match text to bounding boxes."""
     if not detections:
         return detections
 
     image_np = np.array(image)
+    if len(image_np.shape) == 2 or image_np.shape[2] == 1:
+        gray = image_np if len(image_np.shape) == 2 else image_np[:, :, 0]
+    else:
+        gray = cv2.cvtColor(image_np, cv2.COLOR_RGB2GRAY)
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-        futures = [executor.submit(_process_single_crop, det, image_np) for det in detections]
-        concurrent.futures.wait(futures)
+    # Run OCR once on the entire image to get text and coordinates
+    ocr_data = pytesseract.image_to_data(gray, output_type=pytesseract.Output.DICT)
+    
+    words = []
+    n_boxes = len(ocr_data['text'])
+    for i in range(n_boxes):
+        text = ocr_data['text'][i].strip()
+        conf = ocr_data['conf'][i]
+        # conf can be a string sometimes, or negative if empty
+        if text and int(conf) > 0:
+            wx1 = ocr_data['left'][i]
+            wy1 = ocr_data['top'][i]
+            wx2 = wx1 + ocr_data['width'][i]
+            wy2 = wy1 + ocr_data['height'][i]
+            words.append((wx1, wy1, wx2, wy2, text))
+
+    from .cleaning import clean_ocr_text
+
+    for det in detections:
+        x1, y1, x2, y2 = det["bbox"]
+        det_words = []
+        for wx1, wy1, wx2, wy2, text in words:
+            # Check intersection
+            ix1 = max(x1, wx1)
+            iy1 = max(y1, wy1)
+            ix2 = min(x2, wx2)
+            iy2 = min(y2, wy2)
+            
+            if ix2 > ix1 and iy2 > iy1:
+                inter_area = (ix2 - ix1) * (iy2 - iy1)
+                word_area = (wx2 - wx1) * (wy2 - wy1)
+                # If word is largely inside the detection (e.g. > 30%)
+                if inter_area / word_area > 0.3:
+                    det_words.append(text)
+                    
+        raw_text = " ".join(det_words)
+        cleaned_lines = clean_ocr_text([raw_text])
+        det["text"] = " ".join(cleaned_lines)
 
     return detections
 
 
 # -------------------------
-# Visualization & cropping
+# Visualization
 # -------------------------
 
-def visualize_and_crop(
-    img: Image.Image, detections: list, save_dir="crops"
-) -> tuple:
+def visualize(
+    img: Image.Image, detections: list
+) -> Image.Image:
     """
-    Draw bounding boxes on the image and save individual crops.
+    Draw bounding boxes on the image.
 
     Returns:
-        (annotated_image, list_of_crop_paths)
+        annotated_image
     """
-    os.makedirs(save_dir, exist_ok=True)
     img = img.convert("RGB")
     draw = ImageDraw.Draw(img)
     width, height = img.size
 
-    crop_paths = []
     for i, det in enumerate(detections):
         x1, y1, x2, y2 = det["bbox"]
 
@@ -156,10 +177,4 @@ def visualize_and_crop(
 
         draw.rectangle([x1, y1, x2, y2], outline="red", width=2)
 
-        crop = img.crop((x1, y1, x2, y2))
-        crop_path = os.path.join(save_dir, f"crop_{i}.jpg")
-        crop.save(crop_path)
-        crop_paths.append(crop_path)
-
-    logger.info("Saved %d crops to %s", len(crop_paths), save_dir)
-    return img, crop_paths
+    return img
