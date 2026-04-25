@@ -1,0 +1,61 @@
+// // POST /api/workflow/save
+// app.post("/api/workflow/save", async (req, res) => {
+//   const { nodes, edges } = req.body;
+
+//   await WorkflowModel.findOneAndUpdate(
+//     { userId: req.user.id },
+//     { nodes, edges },
+//     { upsert: true }
+//   );
+
+//   res.json({ success: true });
+// });
+
+
+// // GET /api/workflow
+// app.get("/api/workflow", async (req, res) => {
+//   const flow = await WorkflowModel.findOne({ userId: req.user.id });
+//   res.json(flow || { nodes: [], edges: [] });
+// });
+
+
+// //  Frontend -- on load
+// useEffect(() => {
+//   const loadFlow = async () => {
+//     const res = await fetch("/api/workflow");
+//     const data = await res.json();
+
+//     setNodes(data.nodes || initialNode);
+//     setEdges(data.edges || initialEdges);
+//   };
+
+//   loadFlow();
+// }, []);
+
+
+// // Save to backend
+
+// const onSave = async () => {
+//   await fetch("/api/workflow/save", {
+//     method: "POST",
+//     headers: { "Content-Type": "application/json" },
+//     body: JSON.stringify({ nodes, edges }),
+//   });
+
+//   alert("Saved!");
+// };
+
+// // Pro Tip
+
+// useEffect(() => {
+//   const timer = setTimeout(() => {
+//     fetch("/api/workflow/save", {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({ nodes, edges }),
+//     });
+//   }, 1000);
+
+//   return () => clearTimeout(timer);
+// }, [nodes, edges]);
+
