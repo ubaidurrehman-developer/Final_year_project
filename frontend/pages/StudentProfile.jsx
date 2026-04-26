@@ -60,17 +60,21 @@ export default function StudentProfile() {
               <div className="absolute -bottom-2 -right-2 bg-green-500 w-6 h-6 rounded-full border-4 border-white"></div>
             </div>
             <h2 className="mt-6 text-xl font-bold text-gray-800">{data.user.full_name || `${data.user.first_name} ${data.user.last_name}`}</h2>
-            <p className="text-purple-600 font-bold text-xs mt-1">{data.roll_no}</p>
-            <div className="mt-4 inline-block px-4 py-1 bg-purple-50 text-purple-600 text-[10px] font-black rounded-full uppercase">
-              {data.status}
-            </div>
+            {data.roll_no && <p className="text-purple-600 font-bold text-xs mt-1">{data.roll_no}</p>}
+            {data.status && (
+              <div className="mt-4 inline-block px-4 py-1 bg-purple-50 text-purple-600 text-[10px] font-black rounded-full uppercase">
+                {data.status}
+              </div>
+            )}
           </div>
 
-          <div className="bg-white rounded-3xl p-6 shadow-sm space-y-4">
-            <SectionHeader title="Academic Calendar" />
-            <InfoField label="Registration" value={data.academic_calendar.registration} />
-            <InfoField label="Classes Start" value={data.academic_calendar.classes} />
-          </div>
+          {data.academic_calendar && (
+            <div className="bg-white rounded-3xl p-6 shadow-sm space-y-4">
+              <SectionHeader title="Academic Calendar" />
+              <InfoField label="Registration" value={data.academic_calendar.registration} />
+              <InfoField label="Classes Start" value={data.academic_calendar.classes} />
+            </div>
+          )}
         </div>
 
         {/* RIGHT COLUMN: DETAILED INFO */}
@@ -79,15 +83,17 @@ export default function StudentProfile() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
               {/* University Info */}
-              <div className="space-y-6">
-                <SectionHeader title="University Information" />
-                <div className="grid grid-cols-2 gap-4">
-                  <InfoField label="Degree" value={data.degree} />
-                  <InfoField label="Program" value={data.program} />
-                  <InfoField label="Campus" value={data.campus} />
-                  <InfoField label="Batch" value={data.batch} />
+              {data.role === 'student' && (
+                <div className="space-y-6">
+                  <SectionHeader title="University Information" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <InfoField label="Degree" value={data.degree} />
+                    <InfoField label="Program" value={data.program} />
+                    <InfoField label="Campus" value={data.campus} />
+                    <InfoField label="Batch" value={data.batch} />
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Personal Info */}
               <div className="space-y-6">
@@ -101,21 +107,23 @@ export default function StudentProfile() {
               </div>
             </div>
 
-            <div className="mt-10 pt-10 border-t border-gray-50">
-               <SectionHeader title="Contact Information" />
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {data.addresses && (
+              <div className="mt-10 pt-10 border-t border-gray-50">
+                <SectionHeader title="Contact Information" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="bg-gray-50 p-4 rounded-2xl">
                     <p className="text-[10px] font-black text-gray-400 mb-2 uppercase">Permanent Address</p>
-                    <p className="text-sm text-gray-700">{data.addresses.permanent.line}</p>
-                    <p className="text-sm text-gray-500 font-medium">{data.addresses.permanent.city}, {data.addresses.permanent.country}</p>
+                    <p className="text-sm text-gray-700">{data.addresses.permanent?.line}</p>
+                    <p className="text-sm text-gray-500 font-medium">{data.addresses.permanent?.city}, {data.addresses.permanent?.country}</p>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-2xl">
                     <p className="text-[10px] font-black text-gray-400 mb-2 uppercase">Current Address</p>
-                    <p className="text-sm text-gray-700">{data.addresses.current.line}</p>
-                    <p className="text-sm text-gray-500 font-medium">{data.addresses.current.city}, {data.addresses.current.country}</p>
+                    <p className="text-sm text-gray-700">{data.addresses.current?.line}</p>
+                    <p className="text-sm text-gray-500 font-medium">{data.addresses.current?.city}, {data.addresses.current?.country}</p>
                   </div>
-               </div>
-            </div>
+                </div>
+              </div>
+            )}
 
             <div className="flex justify-end mt-10">
               <button className="bg-gray-900 text-white px-8 py-3 rounded-2xl font-bold text-sm hover:bg-purple-700 transition-colors shadow-lg shadow-gray-200">

@@ -69,9 +69,9 @@ function App() {
             }
           />
           <Route
-            path='/student/profile'
+            path='/profile'
             element={
-              <ProtectedRoute allowedRoles={['student']}>
+              <ProtectedRoute allowedRoles={['admin', 'student']}>
                 <StudentProfile />
               </ProtectedRoute>
             }
