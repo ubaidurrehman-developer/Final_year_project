@@ -25,7 +25,7 @@ def _get_client():
         logger.info("OpenRouter client initialised")
     return _client
 
-
+# ISSUE IN PARSE JSON
 def parse_to_json(detections: list, extra_context: str = "") -> dict:
     """
     Send clustered form detections to an LLM and get back structured JSON.

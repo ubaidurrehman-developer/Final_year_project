@@ -23,7 +23,7 @@ import time
 from PIL import Image
 
 from .detection import get_session, preprocess, format_detections
-from .extraction import pixel_tighten_detections, add_text_to_detections, visualize_and_crop
+from .extraction import pixel_tighten_detections, add_text_to_detections, visualize
 from .clustering import clusters_formation
 from .llm_parser import parse_to_json
 
@@ -74,13 +74,13 @@ class StructuringTool:
 
 
 class VisualizationTool:
-    """Creates an annotated image and saves individual crops."""
+    """Creates an annotated image."""
     name = "visualize_results"
 
-    def run(self, image: Image.Image, detections: list, save_dir: str) -> tuple:
-        annotated_img, crop_paths = visualize_and_crop(image, detections, save_dir)
-        logger.info("[%s] %d crops saved to %s", self.name, len(crop_paths), save_dir)
-        return annotated_img, crop_paths
+    def run(self, image: Image.Image, detections: list) -> Image.Image:
+        annotated_img = visualize(image, detections)
+        logger.info("[%s] Annotated image created", self.name)
+        return annotated_img
 
 
 class FormProcessingAgent:
@@ -124,7 +124,6 @@ class FormProcessingAgent:
     def run(
         self,
         image: Image.Image,
-        save_dir: str = "media/crops",
         run_llm: bool = False,
     ) -> dict:
         """
@@ -132,12 +131,11 @@ class FormProcessingAgent:
 
         Args:
             image:    PIL Image of the uploaded form.
-            save_dir: Where to write crop images.
             run_llm:  If True, also invoke the LLM structuring step.
 
         Returns:
             dict with keys: status, count, final_result, structured (if LLM),
-            annotated_image, crop_paths, pipeline_log.
+            annotated_image, pipeline_log.
         """
         self.pipeline_log = []
         t0 = time.time()
@@ -183,11 +181,11 @@ class FormProcessingAgent:
         # --- Step 5: Visualization --------------------------------------------
         self._log_step("visualization", "started")
         valid_results = [d for d in final_results if d.get("bbox") is not None]
-        annotated_img, crop_paths = self.visualization.run(
-            image.copy(), valid_results, save_dir
+        annotated_img = self.visualization.run(
+            image.copy(), valid_results
         )
         self._log_step(
-            "visualization", "completed", f"{len(crop_paths)} crops saved"
+            "visualization", "completed"
         )
 
         elapsed = round(time.time() - t0, 2)
@@ -199,6 +197,5 @@ class FormProcessingAgent:
             "final_result": final_results,
             "structured": structured,
             "annotated_image": annotated_img,
-            "crop_paths": crop_paths,
             "pipeline_log": self.pipeline_log,
         }

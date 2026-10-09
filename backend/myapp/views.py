@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.decorators import api_view
 from django.shortcuts import render, get_object_or_404
 from django.conf import settings as django_settings
 from django.db.models import Count, Q
@@ -13,12 +14,17 @@ from rest_framework import status
 from datetime import date
 from .serializers import *
 from .models import *
+from Backend.services import llm_parser
 
-from PIL import Image
 from Backend.services.agents import FormProcessingAgent
+from PIL import Image
 
-import os
+import os,json
 import logging
+from django.views.generic import TemplateView
+
+class FrontendView(TemplateView):
+    template_name = "index.html"
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +32,122 @@ logger = logging.getLogger(__name__)
 def home(request):
     return render(request, "home.html")
 
+from rest_framework.decorators import permission_classes
+
+
+CACHE = {}
+RULES = []
+MAX_RULES = 20
+
+
+def extract_rules(mistakes):
+    rules = []
+    for m in mistakes or []:
+        solution = m.get("solution", "").strip()
+        if solution and len(solution) > 10:
+            rules.append(solution)
+    return rules
+
+
+def update_rules(new_rules):
+    global RULES
+    for r in new_rules:
+        if r not in RULES:
+            RULES.append(r)
+    RULES = RULES[-MAX_RULES:]
+
+
+def build_system_prompt():
+    rules_text = "\n".join(f"- {r}" for r in RULES)
+
+    return f"""
+You modify JSON strictly.
+
+Follow these rules:
+{rules_text}
+
+Return ONLY valid JSON in this format:
+{{
+  "updated_json": <modified_json>,
+  "errors": [],
+  "mistakes": []
+}}
+
+Rules:
+- Do NOT add explanation
+- Keep keys unchanged unless asked
+- If unsure, do not modify
+"""
+    
+
+HISTORY = {}
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def modify_json(request):
+    try:
+        prompt_text = request.data.get("prompt")
+        json_data = request.data.get("json")
+
+        if not prompt_text or not json_data:
+            return Response({"error": "Missing prompt or json data"}, status=400)
+
+        # Get session-based history
+        session_id = request.session.session_key or "guest"
+        if session_id not in HISTORY:
+            HISTORY[session_id] = [
+                {"role": "system", "content": build_system_prompt()}
+            ]
+        
+        # Add the current state and new instruction to history
+        json_str = json.dumps(json_data, separators=(",", ":"))
+        
+        # We only keep the last 10 messages to avoid token bloating
+        HISTORY[session_id] = HISTORY[session_id][-10:]
+        
+        # Add context and instructions
+        HISTORY[session_id].append({"role": "user", "content": f"Current JSON state: {json_str}"})
+        HISTORY[session_id].append({"role": "user", "content": prompt_text})
+
+        client = llm_parser._get_client()
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",   
+            messages=HISTORY[session_id],
+            temperature=0,
+            max_tokens=2000, # Increased for potentially longer history/responses
+            response_format={"type": "json_object"}
+        )
+
+        content = response.choices[0].message.content.strip()
+
+        if content.startswith("```"):
+            content = content.replace("```json", "").replace("```", "").strip()
+
+        try:
+            parsed_data = json.loads(content)
+        except json.JSONDecodeError:
+            logger.error(f"Invalid JSON: {content[:200]}")
+            return Response({
+                "status": "error",
+                "message": "Invalid JSON from AI"
+            }, status=500)
+
+        # Update History with AI's JSON response so it knows the new state
+        HISTORY[session_id].append({"role": "assistant", "content": content})
+
+        new_rules = extract_rules(parsed_data.get("mistakes", []))
+        update_rules(new_rules)
+
+        return Response(parsed_data)
+
+    except Exception as e:
+        logger.error(f"Error: {str(e)}", exc_info=True)
+        return Response({
+            "status": "error",
+            "message": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
 class CookieJWTAuthentication(JWTAuthentication):
     def authenticate(self, request):
         raw_token = request.COOKIES.get("auth_token")
@@ -49,21 +171,15 @@ class DetectionView(APIView):
         try:
             image = Image.open(uploadedfile)
 
-            # Resolve save paths relative to MEDIA_ROOT
-            crops_dir = os.path.join(django_settings.MEDIA_ROOT, "crops")
-
             # Run the full pipeline via the orchestrator agent
             agent = FormProcessingAgent()
-            result = agent.run(image, save_dir=crops_dir, run_llm=True)
+            result = agent.run(image, run_llm=True)
 
             # Save annotated image
             annotated_img = result.pop("annotated_image", None)
             if annotated_img:
                 annotated_path = os.path.join(django_settings.MEDIA_ROOT, "annotated.jpg")
                 annotated_img.save(annotated_path)
-
-            # Remove non-serializable fields before sending response
-            result.pop("crop_paths", None)
 
             return Response(result)
 
@@ -73,7 +189,6 @@ class DetectionView(APIView):
                 {"status": "error", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
 
 class BasePasswordView(APIView):
 

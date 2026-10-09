@@ -30,3 +30,7 @@ db.sqlite3
 # OS files
 .DS_Store
 Thumbs.db
+
+# Model weights / generated media (from ubaid_code)
+*.pt
+media/

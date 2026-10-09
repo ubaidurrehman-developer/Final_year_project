@@ -10,3 +10,5 @@ psycopg2-binary
 pytesseract
 openai>=1.0.0
 numpy
+gunicorn
+whitenoise
